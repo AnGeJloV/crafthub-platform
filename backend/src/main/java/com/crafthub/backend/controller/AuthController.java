@@ -1,6 +1,8 @@
 package com.crafthub.backend.controller;
 
+import com.crafthub.backend.dto.request.LoginRequest;
 import com.crafthub.backend.dto.request.RegisterRequest;
+import com.crafthub.backend.dto.response.LoginResponse;
 import com.crafthub.backend.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,5 +27,10 @@ public class AuthController {
     public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest request){
         authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body("Пользователь успешно зарегистрирован");
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(authService.login(request));
     }
 }
