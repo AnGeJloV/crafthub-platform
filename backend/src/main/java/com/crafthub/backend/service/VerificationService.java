@@ -41,7 +41,7 @@ public class VerificationService {
         }
 
         // Сохраняем файл на диск и получаем путь
-        String filePath = fileStorageService.saveFile(file);
+        String filePath = fileStorageService.saveFile(file, "documents");
 
         // Создаем и сохраняем заявку в БД
         VerificationRequest request = VerificationRequest.builder()

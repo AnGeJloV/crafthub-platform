@@ -28,7 +28,7 @@ public class FileStorageService {
      * @param file объект MultipartFile из запроса.
      * @return путь к файлу вида "yyyy/MM/dd/uuid_name.ext".
      */
-    public String saveFile(MultipartFile file) {
+    public String saveFile(MultipartFile file, String subDir) {
         try {
             if (file.isEmpty()) {
                 throw new RuntimeException("Файл пуст");
@@ -36,7 +36,7 @@ public class FileStorageService {
 
             // Путь на основе текущей даты
             String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
-            Path targetDirectory = Paths.get(uploadPath, datePath);
+            Path targetDirectory = Paths.get(uploadPath, subDir, datePath);
 
             // Создаем папки, если их еще нет
             Files.createDirectories(targetDirectory);
@@ -49,7 +49,7 @@ public class FileStorageService {
             Files.copy(file.getInputStream(), targetFile);
 
             // Возвращаем относительный путь для сохранения в БД
-            return datePath + "/" + fileName;
+            return subDir + "/" + datePath + "/" + fileName;
         } catch (IOException e) {
             throw new RuntimeException("Не удалось сохранить файл: " + e.getMessage());
         }

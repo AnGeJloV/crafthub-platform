@@ -4,15 +4,16 @@ import com.crafthub.backend.dto.request.VerificationDecisionRequest;
 import com.crafthub.backend.model.VerificationRequest;
 import com.crafthub.backend.model.VerificationStatus;
 import com.crafthub.backend.service.VerificationService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,15 +33,14 @@ public class VerificationController {
     @Value("${upload.path}")
     private String uploadPath;
 
-    @GetMapping("/files/{year}/{month}/{day}/{filename:.+}")
+    @GetMapping("/files/**")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Resource> getFile(
-            @PathVariable String year,
-            @PathVariable String month,
-            @PathVariable String day,
-            @PathVariable String filename) {
+    public ResponseEntity<Resource> getFile(HttpServletRequest request) {
         try {
-            Path filePath = Paths.get(uploadPath, year, month, day, filename);
+            String path = new AntPathMatcher().extractPathWithinPattern(
+                    "/api/verification/files/**", request.getRequestURI());
+
+            Path filePath = Paths.get(uploadPath).resolve(path).normalize();
             Resource resource = new UrlResource(filePath.toUri());
 
             if (resource.exists() || resource.isReadable()) {

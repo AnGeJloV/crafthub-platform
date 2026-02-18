@@ -1,4 +1,15 @@
 package com.crafthub.backend.dto.response;
 
-public class ProductResponse {
+import java.math.BigDecimal;
+
+public record ProductResponse(
+        Long id,
+        String name,
+        String description,
+        BigDecimal price,
+        Integer stockQuantity,
+        String imageUrl,
+        String categoryDisplayName,
+        String sellerName
+) {
 }
