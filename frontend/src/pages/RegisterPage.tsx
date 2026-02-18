@@ -11,6 +11,7 @@ export const RegisterPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [fullName, setFullName] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
 
     const [error, setError] = useState<string | null>(null);
 
@@ -18,13 +19,18 @@ export const RegisterPage = () => {
         e.preventDefault();
         setError(null);
 
-        if (!email || !password || !fullName) {
+        if (!email || !password || !fullName || !phoneNumber) {
             setError('Пожалуйста, заполните все поля.');
             return;
         }
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             setError('Введите корректный email (например: example@mail.com)');
+            return;
+        }
+        const phoneRegex = /^(\+375|375|\+7|8|7)[0-9]{9,11}$/;
+        if (!phoneRegex.test(phoneNumber)) {
+            setError('Введите корректный номер (напр. +375291234567 или 80291234567)');
             return;
         }
         if (password.length < 8) {
@@ -38,6 +44,7 @@ export const RegisterPage = () => {
                 email,
                 password,
                 fullName,
+                phoneNumber,
             });
 
             console.log('Успешная регистрация:', response.data);
@@ -68,6 +75,7 @@ export const RegisterPage = () => {
             <form onSubmit={handleSubmit} noValidate className="space-y-6">
                 <InputField label="Полное имя" id="fullName" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
                 <InputField label="Email" id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <InputField label="Номер телефона" id="phoneNumber" type="text" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required />
                 <InputField label="Пароль" id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
 
                 {/* Отображение ошибки, если она есть */}

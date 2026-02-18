@@ -2,6 +2,7 @@ package com.crafthub.backend.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -18,6 +19,10 @@ public record RegisterRequest(
         String password,
 
         @NotBlank(message = "Полное имя не может быть пустым")
-        String fullName
+        String fullName,
+
+        @NotBlank(message = "Номер телефона не может быть пустым")
+        @Pattern(regexp = "^(\\+375|375|\\+7|8|7)[0-9]{9,11}$", message = "Введите корректный номер (напр. +375291234567 или 80291234567)")
+        String phoneNumber
 ) {
 }
