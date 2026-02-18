@@ -4,6 +4,7 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { VerificationPage } from './pages/VerificationPage';
 import { useAuthStore } from './store/authStore';
+import { AdminPage } from './pages/AdminPage';
 
 const Header = () => {
     const { user, logout } = useAuthStore();
@@ -74,6 +75,7 @@ function App() {
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/register" element={<RegisterPage />} />
                         <Route path="/become-seller" element={<VerificationPage />} />
+                        <Route path="/admin" element={<AdminPage />} />
                     </Routes>
                 </main>
             </div>
