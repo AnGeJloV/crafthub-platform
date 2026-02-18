@@ -16,6 +16,7 @@ export const SecureImage = ({ src, className, alt }: SecureImageProps) => {
                 const response = await apiClient.get(`/verification/files/${src}`, {
                     responseType: 'blob',
                 });
+
                 const url = URL.createObjectURL(response.data);
                 setImageSrc(url);
             } catch (error) {
@@ -30,7 +31,11 @@ export const SecureImage = ({ src, className, alt }: SecureImageProps) => {
         };
     }, [src]);
 
-    if (!imageSrc) return <div className="animate-pulse bg-gray-200 w-full h-48 rounded-lg flex items-center justify-center">Загрузка...</div>;
+    if (!imageSrc) return (
+        <div className={`${className} bg-gray-200 animate-pulse flex items-center justify-center text-xs text-gray-400`}>
+            Загрузка...
+        </div>
+    );
 
     return <img src={imageSrc} className={className} alt={alt} />;
 };
