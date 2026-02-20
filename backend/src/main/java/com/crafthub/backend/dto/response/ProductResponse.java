@@ -10,6 +10,7 @@ public record ProductResponse(
         Integer stockQuantity,
         String imageUrl,
         String categoryDisplayName,
-        String sellerName
+        String sellerName,
+        String sellerEmail
 ) {
 }

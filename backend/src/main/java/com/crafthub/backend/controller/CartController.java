@@ -28,4 +28,24 @@ public class CartController {
         cartService.addToCart(request);
         return ResponseEntity.ok().build();
     }
+
+    @PatchMapping("/items/{productId}")
+    public ResponseEntity<Void> updateQuantity(
+            @PathVariable Long productId,
+            @RequestParam Integer quantity) {
+        cartService.updateQuantity(productId, quantity);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/items/{productId}")
+    public ResponseEntity<Void> removeItem(@PathVariable Long productId) {
+        cartService.removeItem(productId);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Void> clearCart() {
+        cartService.clearCurrentCart();
+        return ResponseEntity.ok().build();
+    }
 }

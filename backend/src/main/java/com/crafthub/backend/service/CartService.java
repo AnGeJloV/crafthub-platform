@@ -65,7 +65,7 @@ public class CartService {
         }
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public CartResponse getCartResponse() {
         Cart cart = getOrCreateCart();
 
@@ -88,5 +88,38 @@ public class CartService {
     @Transactional
     public void clearCart(Cart cart) {
         cartItemRepository.deleteAllByCartId(cart.getId());
+    }
+
+    @Transactional
+    public void updateQuantity(Long productId, Integer quantity) {
+        Cart cart = getOrCreateCart();
+
+        CartItem item = cart.getItems().stream()
+                .filter(i -> i.getProduct().getId().equals(productId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Товар не найден в корзине"));
+
+        if (item.getProduct().getStockQuantity() < quantity) {
+            throw new IllegalStateException("Недостаточно товара на складе");
+        }
+
+        if (quantity <= 0) {
+            cartItemRepository.delete(item);
+        } else {
+            item.setQuantity(quantity);
+            cartItemRepository.save(item);
+        }
+    }
+
+    @Transactional
+    public void removeItem(Long productId) {
+        Cart cart = getOrCreateCart();
+        cartItemRepository.deleteAllByCartIdAndProductId(cart.getId(), productId);
+    }
+
+    @Transactional
+    public void clearCurrentCart() {
+        Cart cart = getOrCreateCart();
+        clearCart(cart);
     }
 }

@@ -70,7 +70,8 @@ public class ProductService {
                 product.getStockQuantity(),
                 product.getImageUrl(),
                 product.getCategory().getDisplayName(),
-                product.getSeller().getFullName()
+                product.getSeller().getFullName(),
+                product.getSeller().getEmail()
         );
     }
 
