@@ -70,13 +70,24 @@ public class CartService {
         Cart cart = getOrCreateCart();
 
         List<CartResponse.CartItemResponse> itemResponses = cart.getItems().stream()
-                .map(item -> new CartResponse.CartItemResponse(
-                        item.getProduct().getId(),
-                        item.getProduct().getName(),
-                        item.getProduct().getPrice(),
-                        item.getQuantity(),
-                        item.getProduct().getImageUrl()
-                )).toList();
+                .map(item -> {
+                    // Ищем главное фото товара среди списка изображений
+                    String mainImageUrl = item.getProduct().getImages().stream()
+                            .filter(ProductImage::isMain)
+                            .map(ProductImage::getImageUrl)
+                            .findFirst()
+                            .orElse(item.getProduct().getImages().isEmpty()
+                                    ? ""
+                                    : item.getProduct().getImages().get(0).getImageUrl());
+
+                    return new CartResponse.CartItemResponse(
+                            item.getProduct().getId(),
+                            item.getProduct().getName(),
+                            item.getProduct().getPrice(),
+                            item.getQuantity(),
+                            mainImageUrl
+                    );
+                }).toList();
 
         BigDecimal total = itemResponses.stream()
                 .map(item -> item.price().multiply(BigDecimal.valueOf(item.quantity())))

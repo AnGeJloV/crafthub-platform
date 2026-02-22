@@ -24,6 +24,10 @@ public record ProductRequest(
         Integer stockQuantity,
 
         @NotNull(message = "Категория не выбрана")
-        Long categoryId
+        Long categoryId,
+
+        String youtubeVideoId,
+
+        int mainImageIndex
 ) {
 }

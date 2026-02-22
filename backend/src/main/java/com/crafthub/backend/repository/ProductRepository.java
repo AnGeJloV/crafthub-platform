@@ -1,6 +1,7 @@
 package com.crafthub.backend.repository;
 
 import com.crafthub.backend.model.Product;
+import com.crafthub.backend.model.ProductStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,4 +13,5 @@ import java.util.List;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findAllBySellerId(Long sellerId);
+    List<Product> findAllByStatus(ProductStatus status);
 }

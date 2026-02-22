@@ -2,9 +2,7 @@ package com.crafthub.backend.service;
 
 import com.crafthub.backend.dto.request.ProductRequest;
 import com.crafthub.backend.dto.response.ProductResponse;
-import com.crafthub.backend.model.Category;
-import com.crafthub.backend.model.Product;
-import com.crafthub.backend.model.User;
+import com.crafthub.backend.model.*;
 import com.crafthub.backend.repository.CategoryRepository;
 import com.crafthub.backend.repository.ProductRepository;
 import com.crafthub.backend.repository.UserRepository;
@@ -14,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,7 +26,7 @@ public class ProductService {
     private final FileStorageService fileStorageService;
 
     @Transactional
-    public ProductResponse createProduct(ProductRequest request, MultipartFile image) {
+    public ProductResponse createProduct(ProductRequest request, List<MultipartFile> images) {
         // Получаем текущего пользователя (продавца)
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User seller = userRepository.findByEmail(email)
@@ -37,41 +36,57 @@ public class ProductService {
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new RuntimeException("Категория не найдена"));
 
-        // Сохраняем изображение товара
-        String imageUrl = fileStorageService.saveFile(image, "products");
-
         // Создаем товар
         Product product = Product.builder()
                 .name(request.name())
                 .description(request.description())
                 .price(request.price())
                 .stockQuantity(request.stockQuantity())
+                .youtubeVideoId(request.youtubeVideoId())
+                .status(ProductStatus.PENDING)
                 .category(category)
                 .seller(seller)
-                .imageUrl(imageUrl)
                 .build();
+
+        // Обрабатываем список изображений
+        List<ProductImage> productImages = new ArrayList<>();
+        for (int i = 0; i < images.size(); i++) {
+            String path = fileStorageService.saveFile(images.get(i), "products");
+            productImages.add(ProductImage.builder()
+                    .imageUrl(path)
+                    .isMain(i == request.mainImageIndex())
+                    .product(product)
+                    .build());
+        }
+        product.setImages(productImages);
 
         Product savedProduct = productRepository.save(product);
         return mapToResponse(savedProduct);
     }
 
-    public List<ProductResponse> getAllProducts() {
-        return productRepository.findAll().stream()
+    public List<ProductResponse> getAllActiveProducts() {
+        return productRepository.findAllByStatus(ProductStatus.ACTIVE).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     private ProductResponse mapToResponse(Product product) {
+        List<ProductResponse.ImageResponse> imageResponses = product.getImages().stream()
+                .map(img -> new ProductResponse.ImageResponse(img.getImageUrl(), img.isMain()))
+                .toList();
+
         return new ProductResponse(
                 product.getId(),
                 product.getName(),
                 product.getDescription(),
                 product.getPrice(),
                 product.getStockQuantity(),
-                product.getImageUrl(),
+                product.getYoutubeVideoId(),
+                product.getStatus().name(),
                 product.getCategory().getDisplayName(),
                 product.getSeller().getFullName(),
-                product.getSeller().getEmail()
+                product.getSeller().getEmail(),
+                imageResponses
         );
     }
 

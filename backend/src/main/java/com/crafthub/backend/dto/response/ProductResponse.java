@@ -1,6 +1,7 @@
 package com.crafthub.backend.dto.response;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public record ProductResponse(
         Long id,
@@ -8,9 +9,15 @@ public record ProductResponse(
         String description,
         BigDecimal price,
         Integer stockQuantity,
-        String imageUrl,
+        String youtubeVideoId,
+        String status,
         String categoryDisplayName,
         String sellerName,
-        String sellerEmail
+        String sellerEmail,
+        List<ImageResponse> images
 ) {
+    public record ImageResponse(
+            String imageUrl,
+            boolean isMain
+    ) {}
 }

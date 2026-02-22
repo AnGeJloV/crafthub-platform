@@ -23,14 +23,14 @@ public class ProductController {
     @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<ProductResponse> createProduct(
             @RequestPart("product") @Valid ProductRequest request,
-            @RequestPart("image") MultipartFile image
+            @RequestPart("image") List<MultipartFile> images
     ) {
-        return ResponseEntity.ok(productService.createProduct(request, image));
+        return ResponseEntity.ok(productService.createProduct(request, images));
     }
 
     @GetMapping
     public ResponseEntity<List<ProductResponse>> getAllProducts() {
-        return ResponseEntity.ok(productService.getAllProducts());
+        return ResponseEntity.ok(productService.getAllActiveProducts());
     }
 
     @GetMapping("/my")

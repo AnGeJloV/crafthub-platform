@@ -10,6 +10,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Сущность товара на маркетплейсе.
@@ -38,8 +39,12 @@ public class Product {
     @Column(nullable = false)
     private Integer stockQuantity;
 
-    @Column(name = "image_url")
-    private String imageUrl;
+    @Column(name = "youtube_video_id")
+    private String youtubeVideoId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ProductStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
@@ -48,6 +53,9 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductImage> images;
 
     @CreationTimestamp
     @Column(updatable = false)
