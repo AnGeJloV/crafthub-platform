@@ -150,15 +150,32 @@ public class ProductService {
                 .orElseThrow(() -> new RuntimeException("Товар не найден"));
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByEmail(email).get();
+        User currentUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        if (!product.getSeller().getId().equals(currentUser.getId()) &&
-                currentUser.getRole() != Role.ROLE_ADMIN) {
-            throw new RuntimeException("Нет прав на удаление этого товара");
+        // Проверка прав: только владелец или АДМИН
+        boolean isAdmin = currentUser.getRole() == Role.ROLE_ADMIN;
+        boolean isOwner = product.getSeller().getId().equals(currentUser.getId());
+
+        if (!isAdmin && !isOwner) {
+            throw new RuntimeException("У вас нет прав на удаление этого товара");
         }
 
-        product.getImages().forEach(img -> fileStorageService.deleteFile(img.getImageUrl()));
+        // Если удаляет АДМИН (не владелец), отправляем уведомление продавцу
+        if (isAdmin && !isOwner) {
+            notificationService.createNotification(
+                    product.getSeller(),
+                    "Ваш товар '" + product.getName() + "' был удален администратором.",
+                    NotificationType.PRODUCT
+            );
+        }
 
+        // Удаляем файлы изображений с физического диска
+        if (product.getImages() != null) {
+            product.getImages().forEach(img -> fileStorageService.deleteFile(img.getImageUrl()));
+        }
+
+        // Удаляем запись из БД
         productRepository.delete(product);
     }
 
@@ -167,43 +184,41 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Товар не найден"));
 
+        // Проверка владельца
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByEmail(email).get();
-
-        if (!product.getSeller().getId().equals(currentUser.getId())) {
+        if (!product.getSeller().getEmail().equals(email)) {
             throw new RuntimeException("Вы не можете редактировать чужой товар");
         }
 
-        Category category = categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> new RuntimeException("Категория не найдена"));
-
-        // Обновляем основные поля
+        // Обновляем текстовые поля
         product.setName(request.name());
         product.setDescription(request.description());
         product.setPrice(request.price());
         product.setStockQuantity(request.stockQuantity());
         product.setYoutubeVideoId(request.youtubeVideoId());
-        product.setCategory(category);
-        product.setStatus(ProductStatus.PENDING);
-        product.setModerationComment(null);
 
+        // Сброс статуса (безопасность: любое изменение требует проверки)
+        product.setStatus(ProductStatus.PENDING);
+
+        // Если прислали НОВЫЕ фото, полностью заменяем старые
         if (images != null && !images.isEmpty()) {
+            // Удаляем старые файлы с диска
             product.getImages().forEach(img -> fileStorageService.deleteFile(img.getImageUrl()));
+            // Очищаем коллекцию (orphanRemoval удалит их из БД)
             product.getImages().clear();
 
-            List<ProductImage> newImages = new ArrayList<>();
+            // Сохраняем новые фото
             for (int i = 0; i < images.size(); i++) {
                 String path = fileStorageService.saveFile(images.get(i), "products");
-                newImages.add(ProductImage.builder()
+                product.getImages().add(ProductImage.builder()
                         .imageUrl(path)
                         .isMain(i == request.mainImageIndex())
                         .product(product)
                         .build());
             }
-            product.setImages(newImages);
         }
 
-        Product updatedProduct = productRepository.save(product);
-        return mapToResponse(updatedProduct);
+        Product saved = productRepository.save(product);
+        return mapToResponse(saved);
     }
 }

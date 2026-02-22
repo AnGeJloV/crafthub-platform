@@ -1,5 +1,6 @@
 package com.crafthub.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -28,6 +29,7 @@ public class Notification {
     @Column(nullable = false)
     private NotificationType type;
 
+    @JsonProperty("isRead")
     private boolean isRead = false;
 
     @CreationTimestamp

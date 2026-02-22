@@ -68,7 +68,7 @@ public class ProductController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}")
@@ -80,5 +80,4 @@ public class ProductController {
     ) {
         return ResponseEntity.ok(productService.updateProduct(id, request, images));
     }
-
 }

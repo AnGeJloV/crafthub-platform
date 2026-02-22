@@ -25,4 +25,10 @@ public class NotificationController {
         notificationService.markAllAsRead();
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/clear")
+    public ResponseEntity<Void> clearNotifications() {
+        notificationService.clearMyNotifications();
+        return ResponseEntity.ok().build();
+    }
 }

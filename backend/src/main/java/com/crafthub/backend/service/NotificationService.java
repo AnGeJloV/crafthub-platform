@@ -47,4 +47,11 @@ public class NotificationService {
         unread.forEach(n -> n.setRead(true));
         notificationRepository.saveAll(unread);
     }
+
+    @Transactional
+    public void clearMyNotifications() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email).orElseThrow();
+        notificationRepository.deleteAllByUserId(user.getId());
+    }
 }

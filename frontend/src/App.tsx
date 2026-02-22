@@ -12,6 +12,7 @@ import { NotificationBell } from './components/NotificationBell';
 import { useAuthStore } from './store/authStore';
 import { useCartStore } from './store/cartStore';
 import { ProductDetailsPage } from './pages/ProductDetailsPage';
+import { EditProductPage } from './pages/EditProductPage';
 
 const Header = () => {
     const { user, logout } = useAuthStore();
@@ -117,6 +118,7 @@ function App() {
                         <Route path="/add-product" element={<AddProductPage />} />
                         <Route path="/cart" element={<CartPage />} />
                         <Route path="/product/:id" element={<ProductDetailsPage />} />
+                        <Route path="/edit-product/:id" element={<EditProductPage />} />
                     </Routes>
                 </main>
             </div>

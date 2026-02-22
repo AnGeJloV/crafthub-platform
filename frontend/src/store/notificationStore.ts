@@ -14,34 +14,39 @@ interface NotificationState {
     unreadCount: number;
     fetchNotifications: () => Promise<void>;
     markAsRead: () => Promise<void>;
+    clearAll: () => Promise<void>;
 }
 
-export const useNotificationStore = create<NotificationState>((set) => ({
+export const useNotificationStore = create<NotificationState>((set, get) => ({
     notifications: [],
     unreadCount: 0,
 
     fetchNotifications: async () => {
         try {
-            const response = await apiClient.get('/notifications');
-            const data: Notification[] = response.data;
+            const res = await apiClient.get('/notifications');
+            const data = res.data;
             set({
                 notifications: data,
-                unreadCount: data.filter(n => !n.isRead).length
+                unreadCount: data.filter((n: Notification) => !n.isRead).length
             });
-        } catch (error) {
-            console.error('Ошибка загрузки уведомлений', error);
-        }
+        } catch (e) { console.error(e); }
     },
 
     markAsRead: async () => {
+        if (get().unreadCount === 0) return;
         try {
             await apiClient.post('/notifications/mark-as-read');
-            set((state) => ({
-                notifications: state.notifications.map(n => ({ ...n, isRead: true })),
-                unreadCount: 0
+            set(state => ({
+                unreadCount: 0,
+                notifications: state.notifications.map(n => ({ ...n, isRead: true }))
             }));
-        } catch (error) {
-            console.error('Ошибка при прочтении уведомлений', error);
-        }
+        } catch (e) { console.error(e); }
+    },
+
+    clearAll: async () => {
+        try {
+            await apiClient.delete('/notifications/clear');
+            set({ notifications: [], unreadCount: 0 });
+        } catch (e) { console.error(e); }
     }
 }));
