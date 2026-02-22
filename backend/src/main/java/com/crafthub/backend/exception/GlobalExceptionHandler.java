@@ -25,8 +25,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         // Создаем карту для хранения детальных ошибок
         Map<String, String> details = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-                details.put(error.getField(), error.getDefaultMessage()));
+        ex.getBindingResult().getFieldErrors().forEach(error -> {
+            details.put(error.getField(), error.getDefaultMessage());
+            System.out.println("Validation error: " + error.getField() + " - " + error.getDefaultMessage());
+        });
 
         // Формируем тело ответа
         Map<String, Object> body = new HashMap<>();

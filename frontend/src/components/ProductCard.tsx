@@ -10,9 +10,9 @@ interface ProductCardProps {
         description: string;
         price: number;
         categoryDisplayName: string;
-        imageUrl: string;
         sellerName: string;
         sellerEmail: string;
+        images: { imageUrl: string; isMain: boolean }[];
     };
 }
 
@@ -20,6 +20,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     const user = useAuthStore((state) => state.user);
     const addItem = useCartStore((state) => state.addItem);
     const [showToast, setShowToast] = useState(false);
+
+    const mainImage = product.images.find(img => img.isMain)?.imageUrl || product.images[0]?.imageUrl;
 
     const handleAddToCart = async () => {
         try {
@@ -47,15 +49,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             {/* Изображение */}
             <div className="relative h-48 overflow-hidden bg-gray-50">
                 <img
-                    src={`http://localhost:8080/uploads/${product.imageUrl}`}
+                    src={`http://localhost:8080/uploads/${mainImage}`}
                     alt={product.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=Нет+фото'; }}
                 />
                 <div className="absolute top-3 left-3">
-          <span className="bg-white/90 backdrop-blur-md text-indigo-700 text-[10px] font-bold uppercase px-2 py-1 rounded shadow-sm">
-            {product.categoryDisplayName}
-          </span>
+                    <span className="bg-white/90 backdrop-blur-md text-indigo-700 text-[10px] font-bold uppercase px-2 py-1 rounded shadow-sm">
+                        {product.categoryDisplayName}
+                    </span>
                 </div>
             </div>
 
