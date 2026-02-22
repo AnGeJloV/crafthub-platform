@@ -39,21 +39,32 @@ public class CartService {
 
     @Transactional
     public void addToCart(AddToCartRequest request) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
         Cart cart = getOrCreateCart();
         Product product = productRepository.findById(request.productId())
                 .orElseThrow(() -> new RuntimeException("Товар не найден"));
 
-        if (product.getSeller().getId().equals(cart.getUser().getId())) {
-            throw new IllegalStateException("Вы не можете добавить в корзину собственный товар");
+        if (product.getSeller().getId().equals(user.getId())) {
+            throw new IllegalStateException("Вы не можете купить собственный товар");
         }
 
         Optional<CartItem> existingItem = cart.getItems().stream()
                 .filter(item -> item.getProduct().getId().equals(product.getId()))
                 .findFirst();
 
+        int currentInCart = existingItem.map(CartItem::getQuantity).orElse(0);
+        int newTotalQuantity = currentInCart + request.quantity();
+
+        if (product.getStockQuantity() < newTotalQuantity) {
+            throw new IllegalStateException("Недостаточно товара на складе. Доступно: " + product.getStockQuantity());
+        }
+
         if (existingItem.isPresent()) {
             CartItem item = existingItem.get();
-            item.setQuantity(item.getQuantity() + request.quantity());
+            item.setQuantity(newTotalQuantity);
             cartItemRepository.save(item);
         } else {
             CartItem newItem = CartItem.builder()

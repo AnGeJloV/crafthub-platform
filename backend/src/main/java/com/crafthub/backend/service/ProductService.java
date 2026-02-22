@@ -137,4 +137,73 @@ public class ProductService {
                 NotificationType.PRODUCT
         );
     }
+
+    public ProductResponse getProductById(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Товар не найден"));
+        return mapToResponse(product);
+    }
+
+    @Transactional
+    public void deleteProduct(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Товар не найден"));
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByEmail(email).get();
+
+        if (!product.getSeller().getId().equals(currentUser.getId()) &&
+                currentUser.getRole() != Role.ROLE_ADMIN) {
+            throw new RuntimeException("Нет прав на удаление этого товара");
+        }
+
+        product.getImages().forEach(img -> fileStorageService.deleteFile(img.getImageUrl()));
+
+        productRepository.delete(product);
+    }
+
+    @Transactional
+    public ProductResponse updateProduct(Long id, ProductRequest request, List<MultipartFile> images) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Товар не найден"));
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByEmail(email).get();
+
+        if (!product.getSeller().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("Вы не можете редактировать чужой товар");
+        }
+
+        Category category = categoryRepository.findById(request.categoryId())
+                .orElseThrow(() -> new RuntimeException("Категория не найдена"));
+
+        // Обновляем основные поля
+        product.setName(request.name());
+        product.setDescription(request.description());
+        product.setPrice(request.price());
+        product.setStockQuantity(request.stockQuantity());
+        product.setYoutubeVideoId(request.youtubeVideoId());
+        product.setCategory(category);
+        product.setStatus(ProductStatus.PENDING);
+        product.setModerationComment(null);
+
+        if (images != null && !images.isEmpty()) {
+            product.getImages().forEach(img -> fileStorageService.deleteFile(img.getImageUrl()));
+            product.getImages().clear();
+
+            List<ProductImage> newImages = new ArrayList<>();
+            for (int i = 0; i < images.size(); i++) {
+                String path = fileStorageService.saveFile(images.get(i), "products");
+                newImages.add(ProductImage.builder()
+                        .imageUrl(path)
+                        .isMain(i == request.mainImageIndex())
+                        .product(product)
+                        .build());
+            }
+            product.setImages(newImages);
+        }
+
+        Product updatedProduct = productRepository.save(product);
+        return mapToResponse(updatedProduct);
+    }
 }

@@ -11,6 +11,7 @@ import { CartPage } from './pages/CartPage';
 import { NotificationBell } from './components/NotificationBell';
 import { useAuthStore } from './store/authStore';
 import { useCartStore } from './store/cartStore';
+import { ProductDetailsPage } from './pages/ProductDetailsPage';
 
 const Header = () => {
     const { user, logout } = useAuthStore();
@@ -115,6 +116,7 @@ function App() {
                         <Route path="/my-products" element={<MyProductsPage />} />
                         <Route path="/add-product" element={<AddProductPage />} />
                         <Route path="/cart" element={<CartPage />} />
+                        <Route path="/product/:id" element={<ProductDetailsPage />} />
                     </Routes>
                 </main>
             </div>

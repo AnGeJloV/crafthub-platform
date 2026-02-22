@@ -54,4 +54,17 @@ public class FileStorageService {
             throw new RuntimeException("Не удалось сохранить файл: " + e.getMessage());
         }
     }
+
+    /**
+     * Удаляет файл с диска.
+     * @param relativePath путь вида "products/2026/02/18/uuid.jpg"
+     */
+    public void deleteFile(String relativePath) {
+        try {
+            Path filePath = Paths.get(uploadPath).resolve(relativePath).normalize();
+            Files.deleteIfExists(filePath);
+        } catch (IOException e) {
+            System.err.println("Не удалось удалить файл: " + relativePath);
+        }
+    }
 }
