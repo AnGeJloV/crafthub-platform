@@ -46,6 +46,9 @@ public class Product {
     @Column(nullable = false)
     private ProductStatus status;
 
+    @Column(name = "moderation_comment")
+    private String moderationComment;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;

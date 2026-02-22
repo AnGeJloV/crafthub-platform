@@ -40,4 +40,24 @@ public class ProductController {
         return ResponseEntity.ok(productService.getMyProducts());
     }
 
+    @GetMapping("/pending")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<ProductResponse>> getPendingProducts() {
+        return ResponseEntity.ok(productService.getPendingProducts());
+    }
+
+    @PostMapping("/{id}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> approveProduct(@PathVariable Long id) {
+        productService.approveProduct(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> rejectProduct(@PathVariable Long id, @RequestBody String reason) {
+        productService.rejectProduct(id, reason);
+        return ResponseEntity.ok().build();
+    }
+
 }

@@ -24,6 +24,7 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
+    private final NotificationService notificationService;
 
     @Transactional
     public ProductResponse createProduct(ProductRequest request, List<MultipartFile> images) {
@@ -70,6 +71,12 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+    public List<ProductResponse> getPendingProducts() {
+        return productRepository.findAllByStatus(ProductStatus.PENDING).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     private ProductResponse mapToResponse(Product product) {
         List<ProductResponse.ImageResponse> imageResponses = product.getImages().stream()
                 .map(img -> new ProductResponse.ImageResponse(img.getImageUrl(), img.isMain()))
@@ -98,5 +105,36 @@ public class ProductService {
         return productRepository.findAllBySellerId(seller.getId()).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void approveProduct(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Товар не найден"));
+
+        product.setStatus(ProductStatus.ACTIVE);
+        productRepository.save(product);
+
+        notificationService.createNotification(
+                product.getSeller(),
+                "Ваш товар '" + product.getName() + "' успешно прошел модерацию!",
+                NotificationType.PRODUCT
+        );
+    }
+
+    @Transactional
+    public void rejectProduct(Long productId, String reason) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Товар не найден"));
+
+        product.setStatus(ProductStatus.REJECTED);
+        product.setModerationComment(reason);
+        productRepository.save(product);
+
+        notificationService.createNotification(
+                product.getSeller(),
+                "Товар '" + product.getName() + "' отклонен. Причина: " + reason,
+                NotificationType.PRODUCT
+        );
     }
 }
