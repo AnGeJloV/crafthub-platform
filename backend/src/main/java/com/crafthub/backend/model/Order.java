@@ -43,4 +43,7 @@ public class Order {
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "cancellation_reason")
+    private String cancellationReason;
 }

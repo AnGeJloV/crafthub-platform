@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +24,7 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final CartService cartService;
+    private final NotificationService notificationService;
 
     @Transactional
     public OrderResponse createOrder(OrderRequest request) {
@@ -99,5 +101,112 @@ public class OrderService {
                 order.getCreatedAt(),
                 itemResponses
         );
+    }
+
+    public List<OrderResponse> getMyPurchases() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User buyer = userRepository.findByEmail(email).orElseThrow();
+        return orderRepository.findAllByBuyerId(buyer.getId()).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<OrderResponse> getMySales() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User seller = userRepository.findByEmail(email).orElseThrow();
+
+        return orderRepository.findAll().stream()
+                .filter(order -> order.getItems().stream()
+                        .anyMatch(item -> item.getProduct().getSeller().getId().equals(seller.getId())))
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void updateOrderStatus(Long orderId, OrderStatus newStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Заказ не найден"));
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByEmail(email).orElseThrow();
+
+        // Продавец может перевести в SHIPPED
+        if (newStatus == OrderStatus.SHIPPED) {
+            boolean isSeller = order.getItems().stream()
+                    .anyMatch(item -> item.getProduct().getSeller().getId().equals(currentUser.getId()));
+            if (!isSeller) throw new RuntimeException("Только продавец может отметить отправку");
+
+            order.setStatus(OrderStatus.SHIPPED);
+            notificationService.createNotification(order.getBuyer(),
+                    "Ваш заказ #" + order.getId() + " был отправлен!", NotificationType.ORDER);
+        }
+
+        // Покупатель может перевести в DELIVERED
+        if (newStatus == OrderStatus.DELIVERED) {
+            if (!order.getBuyer().getId().equals(currentUser.getId())) {
+                throw new RuntimeException("Только покупатель может подтвердить получение");
+            }
+            order.setStatus(OrderStatus.COMPLETED);
+
+            order.getItems().stream()
+                    .map(item -> item.getProduct().getSeller())
+                    .distinct()
+                    .forEach(seller -> notificationService.createNotification(seller,
+                            "Покупатель подтвердил получение заказа #" + order.getId() + ". Деньги зачислены!", NotificationType.ORDER));
+        }
+
+        orderRepository.save(order);
+    }
+
+    @Transactional
+    public void cancelOrder(Long orderId, String reason) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Заказ не найден"));
+
+        if (order.getStatus() == OrderStatus.COMPLETED || order.getStatus() == OrderStatus.CANCELLED) {
+            throw new IllegalStateException("Нельзя отменить завершенный или уже отмененный заказ");
+        }
+
+        // Возвращаем товар на склад
+        for (OrderItem item : order.getItems()) {
+            Product product = item.getProduct();
+            product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
+            productRepository.save(product);
+        }
+
+        // Обновляем заказ
+        order.setStatus(OrderStatus.CANCELLED);
+        order.setCancellationReason(reason);
+        orderRepository.save(order);
+
+        // Уведомляем покупателя
+        notificationService.createNotification(
+                order.getBuyer(),
+                "Заказ #" + order.getId() + " был отменен. Причина: " + reason,
+                NotificationType.ORDER
+        );
+    }
+
+    @Transactional
+    public void openDispute(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Заказ не найден"));
+
+        if (order.getStatus() != OrderStatus.SHIPPED) {
+            throw new IllegalStateException("Спор можно открыть только после отправки товара");
+        }
+
+        order.setStatus(OrderStatus.DISPUTED);
+        orderRepository.save(order);
+
+        // Уведомляем продавца
+        order.getItems().stream()
+                .map(item -> item.getProduct().getSeller())
+                .distinct()
+                .forEach(seller -> notificationService.createNotification(
+                        seller,
+                        "Покупатель открыл спор по заказу #" + order.getId() + ". Свяжитесь с клиентом.",
+                        NotificationType.ORDER
+                ));
     }
 }
