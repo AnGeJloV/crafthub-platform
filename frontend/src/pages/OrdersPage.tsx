@@ -1,9 +1,11 @@
 import {useEffect, useState, useCallback} from 'react';
 import apiClient from '../api';
-import {Truck, CheckCircle, MapPin, AlertCircle, XCircle, Info, ChevronRight, Package} from 'lucide-react';
+import {Truck, CheckCircle, MapPin, XCircle, Info, ChevronRight, MessageSquare} from 'lucide-react';
 import {useAuthStore} from '../store/authStore';
+import {useNavigate} from 'react-router-dom';
 
 interface OrderItem {
+    productId: number;
     productName: string;
     quantity: number;
     priceAtPurchase: number;
@@ -11,6 +13,8 @@ interface OrderItem {
 
 interface Order {
     id: number;
+    buyerId: number;
+    buyerName: string;
     totalAmount: number;
     status: 'PAID' | 'SHIPPED' | 'COMPLETED' | 'CANCELLED' | 'DISPUTED';
     shippingAddress: string;
@@ -24,6 +28,7 @@ export const OrdersPage = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const user = useAuthStore(state => state.user);
+    const navigate = useNavigate();
 
     const fetchOrders = useCallback(async () => {
         setLoading(true);
@@ -39,13 +44,13 @@ export const OrdersPage = () => {
     }, [activeTab]);
 
     useEffect(() => {
-        fetchOrders();
+        void fetchOrders();
     }, [fetchOrders]);
 
     const handleStatusUpdate = async (id: number, status: string) => {
         try {
             await apiClient.patch(`/orders/${id}/status?status=${status}`);
-            await fetchOrders();
+            void fetchOrders();
             alert('Статус успешно изменен');
         } catch (error) {
             console.error('Ошибка обновления статуса:', error);
@@ -61,7 +66,7 @@ export const OrdersPage = () => {
             await apiClient.post(`/orders/${id}/cancel`, reason, {
                 headers: {'Content-Type': 'text/plain'}
             });
-            await fetchOrders();
+            void fetchOrders();
             alert('Заказ отменен, товары возвращены на склад');
         } catch (error) {
             console.error('Ошибка при отмене:', error);
@@ -74,11 +79,29 @@ export const OrdersPage = () => {
 
         try {
             await apiClient.post(`/orders/${id}/dispute`);
-            await fetchOrders();
+            void fetchOrders();
             alert('Спор открыт. Ожидайте связи с мастером.');
         } catch (error) {
             console.error('Ошибка при открытии спора:', error);
             alert('Не удалось открыть спор');
+        }
+    };
+
+    const handleOpenChat = async (order: Order) => {
+        const productId = order.items[0].productId;
+        try {
+
+            const res = await apiClient.get(`/chat/find?productId=${productId}`);
+            const existingId = res.data;
+
+            if (existingId) {
+                navigate(`/chat?dialogue=${existingId}`);
+            } else {
+                navigate(`/chat?product=${productId}&recipient=${order.buyerId}&name=${encodeURIComponent(order.buyerName)}`);
+            }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {
+            alert('Ошибка при открытии чата');
         }
     };
 
@@ -106,30 +129,23 @@ export const OrdersPage = () => {
         <div className="container mx-auto mt-8 px-4 max-w-5xl pb-20">
             <h1 className="text-4xl font-black mb-8 text-slate-900 tracking-tight">Мои заказы</h1>
 
-            {/* Переключатель вкладок */}
             <div
                 className="flex space-x-3 mb-10 bg-slate-100 p-1.5 rounded-2xl w-fit border border-slate-200 shadow-sm">
-                <button
-                    onClick={() => setActiveTab('purchases')}
-                    className={`px-8 py-3 rounded-xl font-bold transition-all text-sm ${activeTab === 'purchases' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-800'}`}
-                >
+                <button onClick={() => setActiveTab('purchases')}
+                        className={`px-8 py-3 rounded-xl font-bold transition-all text-sm ${activeTab === 'purchases' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-800'}`}>
                     Мои покупки
                 </button>
                 {user?.role === 'ROLE_SELLER' && (
-                    <button
-                        onClick={() => setActiveTab('sales')}
-                        className={`px-8 py-3 rounded-xl font-bold transition-all text-sm ${activeTab === 'sales' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-800'}`}
-                    >
+                    <button onClick={() => setActiveTab('sales')}
+                            className={`px-8 py-3 rounded-xl font-bold transition-all text-sm ${activeTab === 'sales' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-800'}`}>
                         Мои продажи
                     </button>
                 )}
             </div>
 
-            {/* Список заказов */}
             <div className="space-y-6">
                 {orders.length === 0 ? (
-                    <div className="text-center py-20 bg-white rounded-[2rem] border-2 border-dashed border-slate-200">
-                        <Package size={48} className="mx-auto text-slate-200 mb-4"/>
+                    <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200">
                         <p className="text-slate-400 font-medium italic text-lg">В этой категории пока нет заказов</p>
                     </div>
                 ) : (
@@ -138,8 +154,6 @@ export const OrdersPage = () => {
                         return (
                             <div key={order.id}
                                  className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm hover:shadow-md transition-all">
-
-                                {/* Шапка карточки */}
                                 <div className="flex flex-col md:flex-row justify-between mb-8 gap-4">
                                     <div className="space-y-1">
                                         <div className="flex items-center space-x-3">
@@ -159,7 +173,6 @@ export const OrdersPage = () => {
                                     </div>
                                 </div>
 
-                                {/* Блок при отмене */}
                                 {order.status === 'CANCELLED' && order.cancellationReason && (
                                     <div
                                         className="mb-8 p-5 bg-red-50 rounded-2xl border border-red-100 flex items-start">
@@ -172,7 +185,6 @@ export const OrdersPage = () => {
                                     </div>
                                 )}
 
-                                {/* Детали заказа */}
                                 <div
                                     className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 border-y border-slate-50 py-8">
                                     <div className="flex items-start">
@@ -208,61 +220,60 @@ export const OrdersPage = () => {
                                     </div>
                                 </div>
 
-                                {/* Подвал с кнопками */}
-                                <div className="flex flex-wrap items-center justify-end gap-4">
-                                    {/* Кнопки для Продавца */}
+                                <div className="flex flex-wrap items-center justify-end gap-4 mt-6">
+                                    {order.items.length > 0 && order.items[0].productId && (
+                                        <button
+                                            onClick={() => handleOpenChat(order)}
+                                            className="bg-indigo-50 text-indigo-600 px-6 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest flex items-center hover:bg-indigo-100 transition-all shadow-sm"
+                                        >
+                                            <MessageSquare size={16} className="mr-2"/> Чат по заказу
+                                        </button>
+                                    )}
+
                                     {activeTab === 'sales' && order.status === 'PAID' && (
-                                        <>
-                                            <button
-                                                onClick={() => handleCancel(order.id)}
-                                                className="px-6 py-4 text-red-400 font-bold text-[10px] uppercase tracking-widest hover:text-red-600 transition-colors"
-                                            >
-                                                Отменить заказ
-                                            </button>
-                                            <button
-                                                onClick={() => handleStatusUpdate(order.id, 'SHIPPED')}
-                                                className="bg-slate-900 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center hover:bg-indigo-600 transition-all shadow-xl active:scale-95"
-                                            >
-                                                <Truck size={18} className="mr-2"/> Отметить отправку
-                                            </button>
-                                        </>
+                                        <button onClick={() => handleCancel(order.id)}
+                                                className="bg-red-500 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase hover:bg-red-600 transition-all shadow-md">
+                                            Вернуть средства (Отменить)
+                                        </button>
+                                    )}
+                                    {activeTab === 'sales' && order.status === 'PAID' && (
+                                        <button onClick={() => handleStatusUpdate(order.id, 'SHIPPED')}
+                                                className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase hover:bg-indigo-600 transition-all shadow-md">
+                                            <Truck size={16} className="mr-2 inline"/> Отметить отправку
+                                        </button>
                                     )}
 
-                                    {/* Кнопки для Покупателя */}
                                     {activeTab === 'purchases' && order.status === 'SHIPPED' && (
-                                        <>
-                                            <button
-                                                onClick={() => handleDispute(order.id)}
-                                                className="px-6 py-4 text-amber-500 font-bold text-[10px] uppercase tracking-widest hover:text-amber-700 transition-colors"
-                                            >
-                                                Товар не получен?
-                                            </button>
-                                            <button
-                                                onClick={() => handleStatusUpdate(order.id, 'DELIVERED')}
-                                                className="bg-green-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center hover:bg-green-700 transition-all shadow-xl active:scale-95"
-                                            >
-                                                <CheckCircle size={18} className="mr-2"/> Подтвердить получение
-                                            </button>
-                                        </>
+                                        <button onClick={() => handleDispute(order.id)}
+                                                className="text-amber-500 font-bold text-xs uppercase hover:underline px-4">
+                                            Товар не получен?
+                                        </button>
+                                    )}
+                                    {activeTab === 'purchases' && order.status === 'SHIPPED' && (
+                                        <button onClick={() => handleStatusUpdate(order.id, 'DELIVERED')}
+                                                className="bg-green-600 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase hover:bg-green-700 transition-all shadow-md">
+                                            <CheckCircle size={16} className="mr-2 inline"/> Подтвердить получение
+                                        </button>
                                     )}
 
-                                    {/* Статусы завершения */}
+                                    {/* Кнопки решения спора */}
+                                    {activeTab === 'sales' && order.status === 'DISPUTED' && (
+                                        <button onClick={() => handleCancel(order.id)}
+                                                className="bg-red-500 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase hover:bg-red-600 transition-all shadow-md">
+                                            Вернуть средства (Отменить заказ)
+                                        </button>
+                                    )}
+                                    {activeTab === 'purchases' && order.status === 'DISPUTED' && (
+                                        <button onClick={() => handleStatusUpdate(order.id, 'DELIVERED')}
+                                                className="bg-green-500 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase hover:bg-green-600 transition-all shadow-md">
+                                            Проблема решена (Завершить)
+                                        </button>
+                                    )}
+
                                     {order.status === 'COMPLETED' && (
                                         <div
-                                            className="flex items-center text-green-600 bg-green-50 px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border border-green-100">
+                                            className="flex items-center text-green-600 bg-green-50 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border border-green-100">
                                             <CheckCircle size={18} className="mr-3"/> Сделка закрыта
-                                        </div>
-                                    )}
-                                    {order.status === 'CANCELLED' && (
-                                        <div
-                                            className="flex items-center text-red-400 bg-red-50 px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border border-red-100">
-                                            <AlertCircle size={18} className="mr-3"/> Заказ аннулирован
-                                        </div>
-                                    )}
-                                    {order.status === 'DISPUTED' && (
-                                        <div
-                                            className="flex items-center text-purple-600 bg-purple-50 px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border border-purple-100 animate-pulse">
-                                            <AlertCircle size={18} className="mr-3"/> Открыт спор
                                         </div>
                                     )}
                                 </div>

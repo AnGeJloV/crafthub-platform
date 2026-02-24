@@ -1,6 +1,7 @@
 package com.crafthub.backend.dto.response;
 
 import com.crafthub.backend.model.OrderStatus;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -10,6 +11,8 @@ import java.util.List;
  */
 public record OrderResponse(
         Long id,
+        Long buyerId,
+        String buyerName,
         BigDecimal totalAmount,
         OrderStatus status,
         String shippingAddress,
@@ -18,8 +21,10 @@ public record OrderResponse(
 ) {
 
     public record OrderItemResponse(
+            Long productId,
             String productName,
             Integer quantity,
             BigDecimal priceAtPurchase
-    ) {}
+    ) {
+    }
 }

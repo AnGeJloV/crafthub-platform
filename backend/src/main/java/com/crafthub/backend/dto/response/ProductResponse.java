@@ -12,6 +12,7 @@ public record ProductResponse(
         String youtubeVideoId,
         String status,
         String categoryDisplayName,
+        Long sellerId,
         String sellerName,
         String sellerEmail,
         List<ImageResponse> images
@@ -19,5 +20,6 @@ public record ProductResponse(
     public record ImageResponse(
             String imageUrl,
             boolean isMain
-    ) {}
+    ) {
+    }
 }

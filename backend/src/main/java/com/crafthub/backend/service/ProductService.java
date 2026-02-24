@@ -28,16 +28,14 @@ public class ProductService {
 
     @Transactional
     public ProductResponse createProduct(ProductRequest request, List<MultipartFile> images) {
-        // Получаем текущего пользователя (продавца)
+
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User seller = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Продавец не найден"));
 
-        // Находим категорию
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new RuntimeException("Категория не найдена"));
 
-        // Создаем товар
         Product product = Product.builder()
                 .name(request.name())
                 .description(request.description())
@@ -49,7 +47,6 @@ public class ProductService {
                 .seller(seller)
                 .build();
 
-        // Обрабатываем список изображений
         List<ProductImage> productImages = new ArrayList<>();
         for (int i = 0; i < images.size(); i++) {
             String path = fileStorageService.saveFile(images.get(i), "products");
@@ -91,6 +88,7 @@ public class ProductService {
                 product.getYoutubeVideoId(),
                 product.getStatus().name(),
                 product.getCategory().getDisplayName(),
+                product.getSeller().getId(),
                 product.getSeller().getFullName(),
                 product.getSeller().getEmail(),
                 imageResponses
@@ -153,7 +151,6 @@ public class ProductService {
         User currentUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        // Проверка прав: только владелец или АДМИН
         boolean isAdmin = currentUser.getRole() == Role.ROLE_ADMIN;
         boolean isOwner = product.getSeller().getId().equals(currentUser.getId());
 
@@ -161,7 +158,6 @@ public class ProductService {
             throw new RuntimeException("У вас нет прав на удаление этого товара");
         }
 
-        // Если удаляет АДМИН (не владелец), отправляем уведомление продавцу
         if (isAdmin && !isOwner) {
             notificationService.createNotification(
                     product.getSeller(),
@@ -170,12 +166,10 @@ public class ProductService {
             );
         }
 
-        // Удаляем файлы изображений с физического диска
         if (product.getImages() != null) {
             product.getImages().forEach(img -> fileStorageService.deleteFile(img.getImageUrl()));
         }
 
-        // Удаляем запись из БД
         productRepository.delete(product);
     }
 
@@ -184,27 +178,23 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Товар не найден"));
 
-        // Проверка владельца
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         if (!product.getSeller().getEmail().equals(email)) {
             throw new RuntimeException("Вы не можете редактировать чужой товар");
         }
 
-        // Обновляем текстовые поля
         product.setName(request.name());
         product.setDescription(request.description());
         product.setPrice(request.price());
         product.setStockQuantity(request.stockQuantity());
         product.setYoutubeVideoId(request.youtubeVideoId());
 
-        // Сброс статуса (безопасность: любое изменение требует проверки)
         product.setStatus(ProductStatus.PENDING);
 
-        // Если прислали НОВЫЕ фото, полностью заменяем старые
         if (images != null && !images.isEmpty()) {
-            // Удаляем старые файлы с диска
+
             product.getImages().forEach(img -> fileStorageService.deleteFile(img.getImageUrl()));
-            // Очищаем коллекцию (orphanRemoval удалит их из БД)
+
             product.getImages().clear();
 
             // Сохраняем новые фото

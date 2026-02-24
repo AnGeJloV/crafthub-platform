@@ -7,13 +7,14 @@ import {VerificationPage} from './pages/VerificationPage';
 import {AdminPage} from './pages/AdminPage';
 import {MyProductsPage} from './pages/MyProductsPage';
 import {AddProductPage} from './pages/AddProductPage';
+import {EditProductPage} from './pages/EditProductPage';
 import {CartPage} from './pages/CartPage';
+import {OrdersPage} from './pages/OrdersPage';
+import {ProductDetailsPage} from './pages/ProductDetailsPage';
+import {ChatPage} from './pages/ChatPage';
 import {NotificationBell} from './components/NotificationBell';
 import {useAuthStore} from './store/authStore';
 import {useCartStore} from './store/cartStore';
-import {ProductDetailsPage} from './pages/ProductDetailsPage';
-import {EditProductPage} from './pages/EditProductPage';
-import {OrdersPage} from "./pages/OrdersPage.tsx";
 
 const Header = () => {
     const {user, logout} = useAuthStore();
@@ -22,7 +23,7 @@ const Header = () => {
 
     useEffect(() => {
         if (user) {
-            fetchCart();
+            void fetchCart();
         }
     }, [user, fetchCart]);
 
@@ -66,12 +67,24 @@ const Header = () => {
                                 </Link>
                             )}
 
-                            <Link to="/orders" className="hover:text-indigo-300 text-sm font-bold uppercase tracking-widest">
-                                Заказы
-                            </Link>
-
                             <div className="flex items-center space-x-3 border-l border-slate-700 pl-5">
                                 <NotificationBell/>
+
+                                {/* Иконка чата */}
+                                <Link to="/chat"
+                                      className="relative p-2 text-slate-300 hover:text-white transition-colors"
+                                      title="Сообщения">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none"
+                                         viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                    </svg>
+                                </Link>
+
+                                <Link to="/orders"
+                                      className="hover:text-indigo-300 text-sm font-bold uppercase tracking-widest px-2">
+                                    Заказы
+                                </Link>
 
                                 <Link to="/cart"
                                       className="relative p-2 text-slate-300 hover:text-white transition-colors">
@@ -83,12 +96,12 @@ const Header = () => {
                                     {items.length > 0 && (
                                         <span
                                             className="absolute -top-1 -right-1 bg-indigo-500 text-white text-[9px] font-black h-4 w-4 flex items-center justify-center rounded-full ring-2 ring-slate-900">
-                                    {items.reduce((sum, item) => sum + item.quantity, 0)}
-                                     </span>
+                      {items.reduce((sum, item) => sum + item.quantity, 0)}
+                    </span>
                                     )}
                                 </Link>
 
-                                <div className="hidden md:flex flex-col items-end mr-2">
+                                <div className="hidden md:flex flex-col items-end mr-2 ml-2">
                                     <span
                                         className="text-[9px] text-slate-500 font-black uppercase leading-none mb-1">{user.role.replace('ROLE_', '')}</span>
                                     <span className="text-xs text-slate-200 font-bold">{user.fullName}</span>
@@ -125,9 +138,9 @@ const Header = () => {
 function App() {
     return (
         <BrowserRouter>
-            <div className="min-h-screen bg-slate-50">
+            <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
                 <Header/>
-                <main className="container mx-auto p-4 pt-10">
+                <main className="container mx-auto p-4 pt-10 flex-grow">
                     <Routes>
                         <Route path="/" element={<HomePage/>}/>
                         <Route path="/login" element={<LoginPage/>}/>
@@ -136,10 +149,11 @@ function App() {
                         <Route path="/admin" element={<AdminPage/>}/>
                         <Route path="/my-products" element={<MyProductsPage/>}/>
                         <Route path="/add-product" element={<AddProductPage/>}/>
-                        <Route path="/cart" element={<CartPage/>}/>
-                        <Route path="/product/:id" element={<ProductDetailsPage/>}/>
                         <Route path="/edit-product/:id" element={<EditProductPage/>}/>
-                        <Route path="/orders" element={<OrdersPage />} />
+                        <Route path="/cart" element={<CartPage/>}/>
+                        <Route path="/orders" element={<OrdersPage/>}/>
+                        <Route path="/product/:id" element={<ProductDetailsPage/>}/>
+                        <Route path="/chat" element={<ChatPage/>}/>
                     </Routes>
                 </main>
             </div>

@@ -28,12 +28,11 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(OrderRequest request) {
-        // Получаем текущего покупателя
+
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User buyer = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        // Инициализируем заказ
         Order order = Order.builder()
                 .buyer(buyer)
                 .shippingAddress(request.shippingAddress())
@@ -44,41 +43,34 @@ public class OrderService {
         List<OrderItem> orderItems = new ArrayList<>();
         BigDecimal total = BigDecimal.ZERO;
 
-        // Обрабатываем товары из запроса
         for (OrderRequest.OrderItemRequest itemReq : request.items()) {
             Product product = productRepository.findById(itemReq.productId())
                     .orElseThrow(() -> new RuntimeException("Товар не найден: " + itemReq.productId()));
 
-            // Проверяем, есть ли товар в наличии
             if (product.getStockQuantity() < itemReq.quantity()) {
                 throw new IllegalStateException("Недостаточно товара на складе: " + product.getName());
             }
 
-            // Уменьшаем количество на складе (Stock Management)
             product.setStockQuantity(product.getStockQuantity() - itemReq.quantity());
             productRepository.save(product);
 
-            // Создаем запись для истории заказа
             OrderItem orderItem = OrderItem.builder()
                     .order(order)
                     .product(product)
                     .quantity(itemReq.quantity())
-                    .priceAtPurchase(product.getPrice()) // Фиксируем цену на момент покупки
+                    .priceAtPurchase(product.getPrice())
                     .build();
 
             orderItems.add(orderItem);
 
-            // Считаем сумму
             total = total.add(product.getPrice().multiply(BigDecimal.valueOf(itemReq.quantity())));
         }
 
         order.setItems(orderItems);
         order.setTotalAmount(total);
 
-        // Сохраняем заказ в БД
         Order savedOrder = orderRepository.save(order);
 
-        // Очищаем корзину пользователя в БД
         Cart cart = cartService.getOrCreateCart();
         cartService.clearCart(cart);
 
@@ -88,6 +80,7 @@ public class OrderService {
     private OrderResponse mapToResponse(Order order) {
         List<OrderResponse.OrderItemResponse> itemResponses = order.getItems().stream()
                 .map(item -> new OrderResponse.OrderItemResponse(
+                        item.getProduct().getId(),
                         item.getProduct().getName(),
                         item.getQuantity(),
                         item.getPriceAtPurchase()
@@ -95,6 +88,8 @@ public class OrderService {
 
         return new OrderResponse(
                 order.getId(),
+                order.getBuyer().getId(),
+                order.getBuyer().getFullName(),
                 order.getTotalAmount(),
                 order.getStatus(),
                 order.getShippingAddress(),
@@ -130,7 +125,6 @@ public class OrderService {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByEmail(email).orElseThrow();
 
-        // Продавец может перевести в SHIPPED
         if (newStatus == OrderStatus.SHIPPED) {
             boolean isSeller = order.getItems().stream()
                     .anyMatch(item -> item.getProduct().getSeller().getId().equals(currentUser.getId()));
@@ -141,7 +135,6 @@ public class OrderService {
                     "Ваш заказ #" + order.getId() + " был отправлен!", NotificationType.ORDER);
         }
 
-        // Покупатель может перевести в DELIVERED
         if (newStatus == OrderStatus.DELIVERED) {
             if (!order.getBuyer().getId().equals(currentUser.getId())) {
                 throw new RuntimeException("Только покупатель может подтвердить получение");
@@ -167,19 +160,16 @@ public class OrderService {
             throw new IllegalStateException("Нельзя отменить завершенный или уже отмененный заказ");
         }
 
-        // Возвращаем товар на склад
         for (OrderItem item : order.getItems()) {
             Product product = item.getProduct();
             product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
             productRepository.save(product);
         }
 
-        // Обновляем заказ
         order.setStatus(OrderStatus.CANCELLED);
         order.setCancellationReason(reason);
         orderRepository.save(order);
 
-        // Уведомляем покупателя
         notificationService.createNotification(
                 order.getBuyer(),
                 "Заказ #" + order.getId() + " был отменен. Причина: " + reason,
@@ -199,7 +189,6 @@ public class OrderService {
         order.setStatus(OrderStatus.DISPUTED);
         orderRepository.save(order);
 
-        // Уведомляем продавца
         order.getItems().stream()
                 .map(item -> item.getProduct().getSeller())
                 .distinct()
