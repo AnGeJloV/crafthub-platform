@@ -4,10 +4,6 @@ ALTER TABLE products
     ADD COLUMN average_rating DECIMAL(3, 2) DEFAULT 0.0,
 ADD COLUMN reviews_count INT DEFAULT 0;
 
-ALTER TABLE users
-    ADD COLUMN average_rating DECIMAL(3, 2) DEFAULT 0.0,
-ADD COLUMN reviews_count INT DEFAULT 0;
-
 CREATE TABLE reviews
 (
     id         BIGINT AUTO_INCREMENT PRIMARY KEY,

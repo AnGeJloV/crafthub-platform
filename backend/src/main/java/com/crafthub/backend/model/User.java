@@ -44,6 +44,12 @@ public class User implements UserDetails {
     @Column(name = "phone_number", nullable = false)
     private String phoneNumber;
 
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
+    @Column(length = 1000)
+    private String bio;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;

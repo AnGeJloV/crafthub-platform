@@ -74,7 +74,7 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
-    private ProductResponse mapToResponse(Product product) {
+    public ProductResponse mapToResponse(Product product) {
         List<ProductResponse.ImageResponse> imageResponses = product.getImages().stream()
                 .map(img -> new ProductResponse.ImageResponse(img.getImageUrl(), img.isMain()))
                 .toList();
