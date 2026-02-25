@@ -24,7 +24,8 @@ public record OrderResponse(
             Long productId,
             String productName,
             Integer quantity,
-            BigDecimal priceAtPurchase
+            BigDecimal priceAtPurchase,
+            boolean isReviewed
     ) {
     }
 }

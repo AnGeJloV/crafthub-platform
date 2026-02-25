@@ -5,6 +5,7 @@ import com.crafthub.backend.dto.response.OrderResponse;
 import com.crafthub.backend.model.*;
 import com.crafthub.backend.repository.OrderRepository;
 import com.crafthub.backend.repository.ProductRepository;
+import com.crafthub.backend.repository.ReviewRepository;
 import com.crafthub.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +27,7 @@ public class OrderService {
     private final UserRepository userRepository;
     private final CartService cartService;
     private final NotificationService notificationService;
+    private final ReviewRepository reviewRepository;
 
     private record OrderItemData(Product product, int quantity) {}
 
@@ -105,7 +107,8 @@ public class OrderService {
                         item.getProduct().getId(),
                         item.getProduct().getName(),
                         item.getQuantity(),
-                        item.getPriceAtPurchase()
+                        item.getPriceAtPurchase(),
+                        reviewRepository.existsByOrderIdAndProductId(order.getId(), item.getProduct().getId())
                 )).toList();
 
         return new OrderResponse(
