@@ -7,5 +7,6 @@ public record ReviewResponse(
         Integer rating,
         String comment,
         String authorName,
+        Long authorId,
         LocalDateTime createdAt
 ) {}

@@ -13,6 +13,7 @@ public record DialogueResponse(
         String interlocutorName,
         String lastMessage,
         LocalDateTime lastMessageTime,
+        Long interlocutorId,
         long unreadCount
 ) {
 }

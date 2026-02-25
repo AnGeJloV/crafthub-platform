@@ -69,6 +69,7 @@ public class ReviewService {
                         r.getRating(),
                         r.getComment(),
                         r.getAuthor().getFullName(),
+                        r.getAuthor().getId(),
                         r.getCreatedAt()
                 )).toList();
     }

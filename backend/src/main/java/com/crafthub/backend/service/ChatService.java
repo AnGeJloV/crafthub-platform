@@ -50,6 +50,7 @@ public class ChatService {
                     interlocutor.getFullName(),
                     lastMsgText,
                     lastMsgTime,
+                    interlocutor.getId(),
                     unread
             );
         }).toList();

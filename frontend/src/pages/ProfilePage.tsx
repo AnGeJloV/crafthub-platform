@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api';
 import { useAuthStore } from '../store/authStore';
 import { ProductCard } from '../components/ProductCard';
-import { Mail, Phone, Edit3, Camera, Save, ArrowLeft, Package, Star } from 'lucide-react';
+import { Mail, Phone, Edit3, Camera, Save, ArrowLeft, Package, Star, User as UserIcon, X } from 'lucide-react';
 
 interface Product {
     id: number;
@@ -33,7 +33,7 @@ interface UserProfile {
 }
 
 export const ProfilePage = () => {
-    const { id } = useParams<{ id: string }>(); // Если ID есть - это чужой профиль
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const currentUser = useAuthStore((state) => state.user);
 
@@ -41,7 +41,6 @@ export const ProfilePage = () => {
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
 
-    // Состояния для формы редактирования
     const [editForm, setEditForm] = useState({ fullName: '', phoneNumber: '', bio: '' });
 
     const isMyProfile = !id || (profile && currentUser && profile.email === currentUser.email);
@@ -59,7 +58,6 @@ export const ProfilePage = () => {
             });
         } catch (error) {
             console.error('Ошибка загрузки профиля:', error);
-            alert('Пользователь не найден');
             navigate('/');
         } finally {
             setLoading(false);
@@ -73,13 +71,14 @@ export const ProfilePage = () => {
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await apiClient.patch('/api/users/me', editForm);
-            alert('Профиль обновлен');
+            // ИСПРАВЛЕНО: путь '/users/me', так как '/api' уже в базовом URL
+            await apiClient.patch('/users/me', editForm);
+            alert('Данные успешно обновлены');
             setIsEditing(false);
             void fetchProfile();
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
-            alert('Ошибка при обновлении профиля');
+            alert('Ошибка при обновлении данных');
         }
     };
 
@@ -91,20 +90,19 @@ export const ProfilePage = () => {
                 await apiClient.post('/users/me/avatar', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
-                void fetchProfile();
+                void fetchProfile(); // Обновляем профиль, чтобы увидеть новую аватарку
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
             } catch (error) {
-                alert('Ошибка загрузки аватара');
+                alert('Ошибка загрузки фото');
             }
         }
     };
 
-    if (loading) return <div className="text-center mt-20 animate-pulse text-slate-400 font-bold uppercase tracking-widest">Загрузка профиля...</div>;
+    if (loading) return <div className="text-center mt-20 text-slate-400 font-bold animate-pulse uppercase tracking-widest">Загрузка...</div>;
     if (!profile) return null;
 
     return (
         <div className="container mx-auto px-4 py-8 pb-20 max-w-6xl">
-            {/* Шапка с кнопкой назад (только если профиль чужой) */}
             {id && (
                 <button onClick={() => navigate(-1)} className="flex items-center text-slate-400 hover:text-indigo-600 mb-8 transition-colors font-bold text-xs uppercase tracking-widest">
                     <ArrowLeft size={16} className="mr-2" /> Назад
@@ -113,106 +111,149 @@ export const ProfilePage = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
 
-                {/* ЛЕВАЯ КОЛОНКА: Инфо о пользователе */}
+                {/* ЛЕВАЯ КОЛОНКА */}
                 <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8 flex flex-col items-center text-center relative overflow-hidden">
-                        {/* Аватарка */}
-                        <div className="relative group mb-6">
-                            <div className="w-32 h-32 rounded-[2rem] overflow-hidden bg-slate-100 border-4 border-white shadow-md">
+                    <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8 flex flex-col items-center text-center relative">
+
+                        <div className="relative mb-6">
+                            <div className="w-32 h-32 rounded-[2.5rem] overflow-hidden bg-slate-100 border-4 border-white shadow-xl">
                                 <img
                                     src={profile.avatarUrl ? `http://localhost:8080/uploads/${profile.avatarUrl}` : `https://ui-avatars.com/api/?name=${profile.fullName}&background=6366f1&color=fff&size=128`}
                                     className="w-full h-full object-cover"
-                                    alt={profile.fullName}
+                                    alt=""
                                 />
                             </div>
                             {isMyProfile && (
-                                <label className="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-xl cursor-pointer hover:bg-indigo-700 transition-all shadow-lg">
+                                <label className="absolute -bottom-2 -right-2 bg-slate-900 text-white p-2.5 rounded-2xl cursor-pointer hover:bg-indigo-600 transition-all shadow-lg border-4 border-white">
                                     <Camera size={18} />
                                     <input type="file" className="hidden" accept="image/*" onChange={handleAvatarUpload} />
                                 </label>
                             )}
                         </div>
 
-                        <h2 className="text-2xl font-black text-slate-800">{profile.fullName}</h2>
-                        <span className="bg-slate-100 text-slate-500 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter mt-2">
-                {profile.role.replace('ROLE_', '')}
-            </span>
+                        {isEditing ? (
+                            <div className="w-full space-y-3">
+                                <input
+                                    className="w-full border-2 border-slate-50 bg-slate-50 p-3 rounded-xl text-center font-bold outline-none focus:border-indigo-500 transition-all"
+                                    value={editForm.fullName}
+                                    onChange={e => setEditForm({...editForm, fullName: e.target.value})}
+                                    placeholder="Ваше имя"
+                                />
+                                <input
+                                    className="w-full border-2 border-slate-50 bg-slate-50 p-3 rounded-xl text-center font-bold outline-none focus:border-indigo-500 transition-all"
+                                    value={editForm.phoneNumber}
+                                    onChange={e => setEditForm({...editForm, phoneNumber: e.target.value})}
+                                    placeholder="Номер телефона"
+                                />
+                            </div>
+                        ) : (
+                            <>
+                                <h2 className="text-2xl font-black text-slate-800">{profile.fullName}</h2>
+                                <span className="bg-indigo-50 text-indigo-600 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest mt-2">
+                    {profile.role.replace('ROLE_', '')}
+                </span>
+                            </>
+                        )}
 
-                        {/* Рейтинг мастера (если есть) */}
-                        {profile.reviewsCount > 0 && (
+                        {profile.role === 'ROLE_SELLER' && profile.reviewsCount > 0 && (
                             <div className="flex items-center mt-4 bg-yellow-50 px-4 py-2 rounded-2xl border border-yellow-100">
                                 <Star size={16} className="text-yellow-500 fill-yellow-500 mr-2" />
                                 <span className="font-black text-yellow-700">{profile.averageRating.toFixed(1)}</span>
-                                <span className="text-yellow-600/50 mx-2">|</span>
+                                <span className="text-yellow-200 mx-2">|</span>
                                 <span className="text-xs font-bold text-yellow-600">{profile.reviewsCount} отзывов</span>
                             </div>
                         )}
 
-                        <div className="w-full border-t border-slate-50 mt-8 pt-8 space-y-4 text-left">
-                            <div className="flex items-center text-slate-500 text-sm">
-                                <Mail size={16} className="mr-3 text-indigo-500" /> {profile.email}
+                        {!isEditing && (
+                            <div className="w-full border-t border-slate-50 mt-8 pt-8 space-y-4 text-left">
+                                <div className="flex items-center text-slate-500 text-sm font-medium">
+                                    <Mail size={16} className="mr-3 text-indigo-400" /> {profile.email}
+                                </div>
+                                <div className="flex items-center text-slate-500 text-sm font-medium">
+                                    <Phone size={16} className="mr-3 text-indigo-400" /> {profile.phoneNumber}
+                                </div>
                             </div>
-                            <div className="flex items-center text-slate-500 text-sm">
-                                <Phone size={16} className="mr-3 text-indigo-500" /> {profile.phoneNumber}
-                            </div>
-                        </div>
+                        )}
 
-                        {isMyProfile && !isEditing && (
-                            <button
-                                onClick={() => setIsEditing(true)}
-                                className="w-full mt-8 flex items-center justify-center py-3 border-2 border-slate-100 text-slate-600 rounded-2xl font-bold text-sm hover:bg-slate-50 transition-all"
-                            >
-                                <Edit3 size={16} className="mr-2" /> Редактировать профиль
-                            </button>
+                        {isMyProfile && (
+                            <div className="w-full mt-8 flex gap-2">
+                                {isEditing ? (
+                                    <>
+                                        <button onClick={handleUpdateProfile} className="flex-1 bg-indigo-600 text-white py-3 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center justify-center">
+                                            <Save size={16} className="mr-2" /> Сохранить
+                                        </button>
+                                        <button onClick={() => setIsEditing(false)} className="bg-slate-100 text-slate-400 p-3 rounded-2xl hover:bg-slate-200 transition-all">
+                                            <X size={20} />
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button onClick={() => setIsEditing(true)} className="w-full flex items-center justify-center py-3 border-2 border-slate-50 text-slate-500 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all">
+                                        <Edit3 size={16} className="mr-2" /> Редактировать
+                                    </button>
+                                )}
+                            </div>
                         )}
                     </div>
 
-                    {/* Блок BIO */}
                     <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">О себе</h3>
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">О себе</h3>
                         {isEditing ? (
                             <textarea
-                                className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-4 text-sm outline-none focus:border-indigo-500 transition-all"
+                                className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-4 text-sm outline-none focus:border-indigo-500 transition-all font-medium"
                                 rows={5}
                                 value={editForm.bio}
                                 onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
+                                placeholder="Расскажите о себе или своих работах..."
                             />
                         ) : (
                             <p className="text-slate-600 text-sm leading-relaxed italic">
-                                {profile.bio || "Пользователь еще не добавил описание."}
+                                {profile.bio || "Участник CraftHub, который ценит ручную работу."}
                             </p>
                         )}
                     </div>
-
-                    {isEditing && (
-                        <button
-                            onClick={handleUpdateProfile}
-                            className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center"
-                        >
-                            <Save size={20} className="mr-2" /> СОХРАНИТЬ ИЗМЕНЕНИЯ
-                        </button>
-                    )}
                 </div>
 
-                {/* ПРАВАЯ КОЛОНКА: Товары мастера */}
+                {/* ПРАВАЯ КОЛОНКА */}
                 <div className="lg:col-span-2">
-                    <div className="flex items-center justify-between mb-8">
-                        <h3 className="text-2xl font-black text-slate-800 flex items-center">
-                            <Package size={24} className="mr-3 text-indigo-500" />
-                            {isMyProfile ? 'Мои активные товары' : `Изделия мастера`}
-                        </h3>
-                        <span className="text-slate-400 font-bold text-sm">{profile.products.length} шт.</span>
-                    </div>
+                    {profile.role === 'ROLE_SELLER' ? (
+                        <>
+                            <div className="flex items-center justify-between mb-8">
+                                <h3 className="text-2xl font-black text-slate-800 flex items-center uppercase tracking-tighter">
+                                    <Package size={24} className="mr-3 text-indigo-500" /> Изделия мастера
+                                </h3>
+                                <span className="bg-white px-3 py-1 rounded-full border border-slate-100 text-slate-400 font-bold text-xs">{profile.products.length} товаров</span>
+                            </div>
 
-                    {profile.products.length === 0 ? (
-                        <div className="text-center py-20 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
-                            <p className="text-slate-400 font-medium">Товары отсутствуют</p>
-                        </div>
+                            {profile.products.length === 0 ? (
+                                <div className="text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
+                                    <PackageOpen className="mx-auto text-slate-100 mb-4" size={64} />
+                                    <p className="text-slate-300 font-bold uppercase tracking-widest text-xs">Товары на модерации или отсутствуют</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {profile.products.map(product => (
+                                        <ProductCard key={product.id} product={product} />
+                                    ))}
+                                </div>
+                            )}
+                        </>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {profile.products.map(product => (
-                                <ProductCard key={product.id} product={product} />
-                            ))}
+                        <div className="h-full flex flex-col items-center justify-center bg-white rounded-[3rem] border border-slate-100 p-12 text-center shadow-sm">
+                            <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-[2rem] flex items-center justify-center mb-6">
+                                <UserIcon size={40} />
+                            </div>
+                            <h3 className="text-2xl font-black text-slate-800 mb-2 uppercase tracking-tighter">Покупатель</h3>
+                            <p className="text-slate-400 max-w-sm leading-relaxed font-medium">
+                                Этот пользователь пока только присматривается к уникальным изделиям наших мастеров.
+                            </p>
+                            {isMyProfile && profile.role === 'ROLE_USER' && (
+                                <button
+                                    onClick={() => navigate('/become-seller')}
+                                    className="mt-8 bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all active:scale-95"
+                                >
+                                    Стать мастером
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>
@@ -221,3 +262,8 @@ export const ProfilePage = () => {
         </div>
     );
 };
+
+// Вспомогательный компонент для пустой коробки
+const PackageOpen = ({ size, className }: { size: number, className: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m8 3 4 8 5-5-5 15-2-10z"/></svg>
+);
