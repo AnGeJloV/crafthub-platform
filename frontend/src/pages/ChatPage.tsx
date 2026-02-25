@@ -157,11 +157,6 @@ export const ChatPage = () => {
                                     <h3 className="font-black text-slate-800">
                                         {activeDialogue ? activeDialogue.interlocutorName : draftName}
                                     </h3>
-                                    <div
-                                        className="flex items-center text-[9px] text-green-500 font-black uppercase tracking-tighter">
-                                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse"/>
-                                        В сети
-                                    </div>
                                 </div>
                             </div>
 
