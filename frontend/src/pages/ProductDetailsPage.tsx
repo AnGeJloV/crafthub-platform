@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import {useParams, useNavigate, Link} from 'react-router-dom';
 import apiClient from '../api';
 import { useCartStore } from '../store/cartStore';
 import { useAuthStore } from '../store/authStore';
@@ -141,7 +141,10 @@ export const ProductDetailsPage = () => {
 
                         <h1 className="text-4xl font-black text-slate-900 mb-2">{product.name}</h1>
                         <p className="text-slate-400 flex items-center text-sm">
-                            <User size={14} className="mr-1"/> Автор: <span className="font-bold text-slate-600 ml-1">{product.sellerName}</span>
+                            <User size={14} className="mr-1"/> Автор:
+                            <Link to={`/profile/${product.sellerId}`} className="font-bold text-indigo-600 ml-1 hover:underline">
+                                {product.sellerName}
+                            </Link>
                         </p>
                     </div>
 

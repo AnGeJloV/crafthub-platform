@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import apiClient from '../api';
 import { Truck, CheckCircle, MapPin, Info, ChevronRight, MessageSquare, Star } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { useNavigate } from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import axios from 'axios';
 
 interface OrderItem {
@@ -176,6 +176,12 @@ export const OrdersPage = () => {
                                         <div className="flex items-center space-x-3">
                                             <h2 className="text-2xl font-black text-slate-800">№ {order.id}</h2>
                                             <span className={`text-[10px] uppercase font-black px-3 py-1 rounded-full border ${status.style}`}>{status.label}</span>
+                                            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">
+                                                {activeTab === 'purchases' ? 'Продавец: ' : 'Покупатель: '}
+                                                <Link to={`/profile/${activeTab === 'purchases' ? order.sellerId : order.buyerId}`} className="text-indigo-600 hover:underline">
+                                                    {activeTab === 'purchases' ? order.sellerName : order.buyerName}
+                                                </Link>
+                                            </p>
                                         </div>
                                         <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{new Date(order.createdAt).toLocaleString('ru-RU')}</p>
                                     </div>

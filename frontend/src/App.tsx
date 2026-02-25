@@ -16,6 +16,7 @@ import { NotificationBell } from './components/NotificationBell';
 import { useAuthStore } from './store/authStore';
 import { useCartStore } from './store/cartStore';
 import { Package, UserCircle, LogOut, MessageCircle, ShoppingCart } from 'lucide-react';
+import {ProfilePage} from "./pages/ProfilePage.tsx";
 
 const Header = () => {
     const { user, logout } = useAuthStore();
@@ -138,6 +139,8 @@ function App() {
                         <Route path="/orders" element={<OrdersPage/>}/>
                         <Route path="/product/:id" element={<ProductDetailsPage/>}/>
                         <Route path="/chat" element={<ChatPage/>}/>
+                        <Route path="/profile" element={<ProfilePage />} />
+                        <Route path="/profile/:id" element={<ProfilePage />} />
                     </Routes>
                 </main>
             </div>
