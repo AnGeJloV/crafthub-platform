@@ -48,6 +48,12 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Role role;
 
+    @Column(name = "average_rating", columnDefinition = "DECIMAL(3,2)")
+    private Double averageRating = 0.0;
+
+    @Column(name = "reviews_count")
+    private Integer reviewsCount = 0;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
