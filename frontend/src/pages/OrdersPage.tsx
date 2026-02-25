@@ -89,15 +89,17 @@ export const OrdersPage = () => {
 
     const handleOpenChat = async (order: Order) => {
         const productId = order.items[0].productId;
-        try {
+        const recipientId = activeTab === 'sales' ? order.buyerId : '';
 
-            const res = await apiClient.get(`/chat/find?productId=${productId}`);
+        try {
+            const queryUrl = `/chat/find?productId=${productId}${recipientId ? `&recipientId=${recipientId}` : ''}`;
+            const res = await apiClient.get(queryUrl);
             const existingId = res.data;
 
             if (existingId) {
                 navigate(`/chat?dialogue=${existingId}`);
             } else {
-                navigate(`/chat?product=${productId}&recipient=${order.buyerId}&name=${encodeURIComponent(order.buyerName)}`);
+                navigate(`/chat?product=${productId}&recipient=${recipientId}&name=${encodeURIComponent(order.buyerName)}`);
             }
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
@@ -221,12 +223,10 @@ export const OrdersPage = () => {
                                 </div>
 
                                 <div className="flex flex-wrap items-center justify-end gap-4 mt-6">
-                                    {order.items.length > 0 && order.items[0].productId && (
-                                        <button
-                                            onClick={() => handleOpenChat(order)}
-                                            className="bg-indigo-50 text-indigo-600 px-6 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest flex items-center hover:bg-indigo-100 transition-all shadow-sm"
-                                        >
-                                            <MessageSquare size={16} className="mr-2"/> Чат по заказу
+                                    {activeTab === 'sales' && order.status === 'PAID' && (
+                                        <button onClick={() => handleStatusUpdate(order.id, 'SHIPPED')}
+                                                className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase hover:bg-indigo-600 transition-all shadow-md">
+                                            <Truck size={16} className="mr-2 inline"/> Отметить отправку
                                         </button>
                                     )}
 
@@ -234,12 +234,6 @@ export const OrdersPage = () => {
                                         <button onClick={() => handleCancel(order.id)}
                                                 className="bg-red-500 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase hover:bg-red-600 transition-all shadow-md">
                                             Вернуть средства (Отменить)
-                                        </button>
-                                    )}
-                                    {activeTab === 'sales' && order.status === 'PAID' && (
-                                        <button onClick={() => handleStatusUpdate(order.id, 'SHIPPED')}
-                                                className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase hover:bg-indigo-600 transition-all shadow-md">
-                                            <Truck size={16} className="mr-2 inline"/> Отметить отправку
                                         </button>
                                     )}
 
@@ -267,6 +261,15 @@ export const OrdersPage = () => {
                                         <button onClick={() => handleStatusUpdate(order.id, 'DELIVERED')}
                                                 className="bg-green-500 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase hover:bg-green-600 transition-all shadow-md">
                                             Проблема решена (Завершить)
+                                        </button>
+                                    )}
+
+                                    {order.items.length > 0 && order.items[0].productId && (
+                                        <button
+                                            onClick={() => handleOpenChat(order)}
+                                            className="bg-indigo-50 text-indigo-600 px-6 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest flex items-center hover:bg-indigo-100 transition-all shadow-sm"
+                                        >
+                                            <MessageSquare size={16} className="mr-2"/> Чат по заказу
                                         </button>
                                     )}
 

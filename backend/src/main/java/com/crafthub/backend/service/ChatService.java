@@ -139,10 +139,28 @@ public class ChatService {
      * Ищет существующий диалог между текущим пользователем и товаром.
      */
     @Transactional(readOnly = true)
-    public Long findExistingDialogue(Long productId) {
+    public Long findExistingDialogue(Long productId, Long recipientId) {
         User currentUser = getCurrentUser();
-        return dialogueRepository.findByBuyerIdAndProductId(currentUser.getId(), productId)
+        Long targetBuyerId = (recipientId != null) ? recipientId : currentUser.getId();
+
+        return dialogueRepository.findByBuyerIdAndProductId(targetBuyerId, productId)
                 .map(Dialogue::getId)
                 .orElse(null);
+    }
+
+    /**
+     * Удаляет диалог и все его сообщения.
+     */
+    @Transactional
+    public void deleteDialogue(Long dialogueId) {
+        User currentUser = getCurrentUser();
+        Dialogue dialogue = dialogueRepository.findById(dialogueId)
+                .orElseThrow(() -> new RuntimeException("Диалог не найден"));
+
+        if (!dialogue.getBuyer().getId().equals(currentUser.getId()) && !dialogue.getSeller().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("Нет прав на удаление этого диалога");
+        }
+
+        dialogueRepository.delete(dialogue);
     }
 }

@@ -34,7 +34,15 @@ public class ChatController {
     }
 
     @GetMapping("/find")
-    public ResponseEntity<Long> findDialogue(@RequestParam Long productId) {
-        return ResponseEntity.ok(chatService.findExistingDialogue(productId));
+    public ResponseEntity<Long> findDialogue(
+            @RequestParam Long productId,
+            @RequestParam(required = false) Long recipientId) {
+        return ResponseEntity.ok(chatService.findExistingDialogue(productId, recipientId));
+    }
+
+    @DeleteMapping("/{dialogueId}")
+    public ResponseEntity<Void> deleteDialogue(@PathVariable Long dialogueId) {
+        chatService.deleteDialogue(dialogueId);
+        return ResponseEntity.ok().build();
     }
 }

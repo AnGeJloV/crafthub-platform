@@ -1,7 +1,8 @@
 import React, {useEffect, useState, useRef, useCallback} from 'react';
-import {useSearchParams, Link} from 'react-router-dom';
+import {useSearchParams, Link, useNavigate} from 'react-router-dom';
 import apiClient from '../api';
-import {Send, MessageSquare, Info, User} from 'lucide-react';
+import {Send, MessageSquare, User, Trash2} from 'lucide-react';
+import axios from 'axios';
 
 interface Dialogue {
     id: number;
@@ -26,6 +27,7 @@ interface Message {
 
 export const ChatPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
     const activeDialogueId = searchParams.get('dialogue');
 
     const draftProductId = searchParams.get('product');
@@ -35,6 +37,11 @@ export const ChatPage = () => {
     const [dialogues, setDialogues] = useState<Dialogue[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
+
+    // Состояние для хранения полной инфы о товаре (для карточки)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [productDetails, setProductDetails] = useState<any>(null);
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const fetchDialogues = useCallback(async () => {
@@ -59,16 +66,35 @@ export const ChatPage = () => {
         }
     }, [activeDialogueId]);
 
+    // Загружаем инфо о товаре для красивой шапки
+    const fetchProductDetails = useCallback(async (productId: string | number) => {
+        try {
+            const res = await apiClient.get(`/products/${productId}`);
+            setProductDetails(res.data);
+        } catch (error) {
+            console.error('Ошибка загрузки товара для чата', error);
+        }
+    }, []);
+
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         void fetchDialogues();
         void fetchMessages();
+
+        // Подгружаем товар для активного диалога или черновика
+        const activeDiag = dialogues.find(d => d.id.toString() === activeDialogueId);
+        if (activeDiag) {
+            fetchProductDetails(activeDiag.productId);
+        } else if (draftProductId) {
+            fetchProductDetails(draftProductId);
+        }
+
         const interval = setInterval(() => {
             void fetchDialogues();
             void fetchMessages();
         }, 2000);
         return () => clearInterval(interval);
-    }, [fetchDialogues, fetchMessages]);
+    }, [fetchDialogues, fetchMessages, activeDialogueId, draftProductId, dialogues, fetchProductDetails]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({behavior: 'smooth'});
@@ -88,20 +114,41 @@ export const ChatPage = () => {
 
             setNewMessage('');
             if (!activeDialogueId && res.data) {
-
                 setSearchParams({dialogue: res.data.toString()});
             } else {
                 void fetchMessages();
                 void fetchDialogues();
             }
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
-            alert('Ошибка при отправке');
+            if (axios.isAxiosError(error)) {
+                alert(error.response?.data?.message || 'Ошибка при отправке');
+            }
+        }
+    };
+
+    const handleDeleteDialogue = async (e: React.MouseEvent, dialogueId: number) => {
+        e.stopPropagation();
+        if (!window.confirm('Вы уверены, что хотите навсегда удалить этот диалог?')) return;
+
+        try {
+            await apiClient.delete(`/chat/${dialogueId}`);
+            if (activeDialogueId === dialogueId.toString()) {
+                navigate('/chat');
+                setProductDetails(null);
+            }
+            void fetchDialogues();
+        } catch (error) {
+            console.error(error);
+            alert('Не удалось удалить диалог');
         }
     };
 
     const activeDialogue = dialogues.find(d => d.id.toString() === activeDialogueId);
     const isDraftMode = !activeDialogueId && draftProductId;
+
+    // Находим главное фото для карточки товара
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mainImage = productDetails?.images?.find((img: any) => img.isMain)?.imageUrl || productDetails?.images?.[0]?.imageUrl || '';
 
     return (
         <div className="container mx-auto mt-4 px-4 h-[85vh] flex gap-6 pb-4">
@@ -121,13 +168,23 @@ export const ChatPage = () => {
                         dialogues.map(d => (
                             <div
                                 key={d.id}
-                                onClick={() => setSearchParams({dialogue: d.id.toString()})}
-                                className={`p-4 border-b border-slate-50 cursor-pointer transition-all hover:bg-slate-50 ${activeDialogueId === d.id.toString() ? 'bg-indigo-50 border-l-4 border-indigo-500' : 'border-l-4 border-l-transparent'}`}
+                                onClick={() => setSearchParams({ dialogue: d.id.toString() })}
+                                className={`p-4 border-b border-slate-50 cursor-pointer transition-all hover:bg-slate-50 group ${activeDialogueId === d.id.toString() ? 'bg-indigo-50/50 border-l-4 border-indigo-500' : 'border-l-4 border-l-transparent'}`}
                             >
                                 <div className="flex justify-between items-center mb-1">
                                     <span className="font-bold text-slate-800 text-sm">{d.interlocutorName}</span>
-                                    {d.unreadCount > 0 && <span
-                                        className="bg-red-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">НОВОЕ</span>}
+                                    <div className="flex items-center gap-2">
+                                        {d.unreadCount > 0 && (
+                                            <span
+                                                className="bg-red-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">НОВОЕ</span>
+                                        )}
+                                        <button
+                                            onClick={(e) => handleDeleteDialogue(e, d.id)}
+                                            className="text-slate-300 hover:text-red-500 p-1 rounded-md transition-all opacity-0 group-hover:opacity-100"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
                                 </div>
                                 <div
                                     className="text-[9px] text-indigo-500 font-bold uppercase truncate">{d.productName}</div>
@@ -147,30 +204,52 @@ export const ChatPage = () => {
                     </div>
                 ) : (
                     <>
+                        {/* ШАПКА ЧАТА */}
                         <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                             <div className="flex items-center">
                                 <div
-                                    className="w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center mr-3 font-black shadow-lg shadow-indigo-100">
+                                    className="w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center mr-3 font-black shadow-lg shadow-indigo-100 shrink-0">
                                     {(activeDialogue?.interlocutorName || draftName || "?")[0]}
                                 </div>
                                 <div>
                                     <h3 className="font-black text-slate-800">
                                         {activeDialogue ? activeDialogue.interlocutorName : draftName}
                                     </h3>
+                                    <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest mt-0.5">
+                                        {isDraftMode ? 'Связь по товару' : 'Собеседник'}
+                                    </p>
                                 </div>
                             </div>
 
-                            <Link to={`/product/${activeDialogue?.productId || draftProductId}`}
-                                  className="flex items-center bg-white p-2 rounded-2xl border border-slate-200 hover:border-indigo-300 transition-all shadow-sm max-w-[200px]">
-                <span className="text-[10px] font-black text-slate-700 truncate px-2">
-                  {activeDialogue ? activeDialogue.productName : draftName}
-                </span>
-                                <div className="bg-slate-100 p-1.5 rounded-lg text-slate-400">
-                                    <Info size={14}/>
-                                </div>
-                            </Link>
+                            <div className="flex items-center gap-4">
+                                {productDetails && (
+                                    <Link to={`/product/${productDetails.id}`}
+                                          className="flex items-center bg-white p-2 rounded-2xl border border-slate-200 hover:border-indigo-300 transition-all shadow-sm max-w-[220px] group">
+                                        <div className="h-10 w-10 rounded-xl overflow-hidden shrink-0 bg-slate-100">
+                                            <img
+                                                src={`http://localhost:8080/uploads/${mainImage}`}
+                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                alt=""
+                                                onError={(e) => {
+                                                    e.currentTarget.src = 'https://placehold.co/100x100?text=No+Img';
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="ml-3 flex flex-col justify-center overflow-hidden pr-2">
+                        <span className="text-xs font-bold text-slate-800 truncate leading-tight">
+                            {productDetails.name}
+                        </span>
+                                            <span className="text-[10px] font-black text-indigo-600 mt-0.5">
+                            {productDetails.price} BYN
+                        </span>
+                                        </div>
+                                    </Link>
+                                )}
+
+                            </div>
                         </div>
 
+                        {/* ИСТОРИЯ СООБЩЕНИЙ */}
                         <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30">
                             {messages.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full opacity-30 grayscale">
