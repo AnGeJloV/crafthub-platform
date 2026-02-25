@@ -91,6 +91,8 @@ public class ProductService {
                 product.getSeller().getId(),
                 product.getSeller().getFullName(),
                 product.getSeller().getEmail(),
+                product.getAverageRating(),
+                product.getReviewsCount(),
                 imageResponses
         );
     }

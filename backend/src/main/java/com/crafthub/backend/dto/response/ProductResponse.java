@@ -15,6 +15,8 @@ public record ProductResponse(
         Long sellerId,
         String sellerName,
         String sellerEmail,
+        Double averageRating,
+        Integer reviewsCount,
         List<ImageResponse> images
 ) {
     public record ImageResponse(
