@@ -12,6 +12,7 @@ CREATE TABLE reviews
     product_id BIGINT NOT NULL,
     author_id  BIGINT NOT NULL,
     order_id   BIGINT NOT NULL,
+    is_reported BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_review_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE,

@@ -42,6 +42,10 @@ public class Review {
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
+    @Builder.Default
+    @Column(name = "is_reported")
+    private boolean isReported = false;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

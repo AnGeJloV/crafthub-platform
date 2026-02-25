@@ -70,6 +70,9 @@ public class ReviewService {
                         r.getComment(),
                         r.getAuthor().getFullName(),
                         r.getAuthor().getId(),
+                        r.getAuthor().getEmail(),
+                        r.getProduct().getId(),
+                        r.getProduct().getName(),
                         r.getCreatedAt()
                 )).toList();
     }
@@ -94,5 +97,59 @@ public class ReviewService {
         seller.setAverageRating(newRating);
         seller.setReviewsCount(totalReviews);
         userRepository.save(seller);
+    }
+
+    @Transactional
+    public void reportReview(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Отзыв не найден"));
+        review.setReported(true);
+        reviewRepository.save(review);
+    }
+
+    public List<ReviewResponse> getReportedReviews() {
+        return reviewRepository.findAllReported().stream()
+                .map(r -> new ReviewResponse(
+                        r.getId(),
+                        r.getRating(),
+                        r.getComment(),
+                        r.getAuthor().getFullName(),
+                        r.getAuthor().getId(),
+                        r.getAuthor().getEmail(),
+                        r.getProduct().getId(),
+                        r.getProduct().getName(),
+                        r.getCreatedAt()
+                )).toList();
+    }
+
+    @Transactional
+    public void ignoreReport(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Отзыв не найден"));
+        review.setReported(false);
+        reviewRepository.save(review);
+    }
+
+    @Transactional
+    public void deleteReview(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Отзыв не найден"));
+
+        Product product = review.getProduct();
+        User seller = product.getSeller();
+
+        reviewRepository.delete(review);
+
+        updateProductRatingAfterDeletion(product);
+        updateSellerRating(seller);
+    }
+
+    private void updateProductRatingAfterDeletion(Product product) {
+        Double newRating = reviewRepository.calculateAverageRatingForProduct(product.getId());
+        Integer count = reviewRepository.findAllByProductIdOrderByCreatedAtDesc(product.getId()).size();
+
+        product.setAverageRating(Math.round(newRating * 10.0) / 10.0);
+        product.setReviewsCount(count);
+        productRepository.save(product);
     }
 }

@@ -8,5 +8,9 @@ public record ReviewResponse(
         String comment,
         String authorName,
         Long authorId,
+        String authorEmail,
+        Long productId,
+        String productName,
         LocalDateTime createdAt
-) {}
+) {
+}

@@ -28,4 +28,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     // Количество отзывов у продавца
     @Query("SELECT COUNT(r) FROM Review r WHERE r.product.seller.id = :sellerId")
     Integer countReviewsForSeller(@Param("sellerId") Long sellerId);
+
+    // Найти все отзывы, на которые пожаловались
+    @Query("SELECT r FROM Review r WHERE r.isReported = true ORDER BY r.createdAt DESC")
+    List<Review> findAllReported();
 }

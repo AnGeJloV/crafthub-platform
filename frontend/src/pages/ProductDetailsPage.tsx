@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
-import {useParams, useNavigate, Link} from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import apiClient from '../api';
 import { useCartStore } from '../store/cartStore';
 import { useAuthStore } from '../store/authStore';
-import { ShoppingCart, User, Tag, Package, PlaySquare, ChevronLeft, MessageSquare, Star, MessageCircle } from 'lucide-react';
+import {
+    ShoppingCart, User, Tag, Package, PlaySquare,
+    ChevronLeft, MessageSquare, Star, MessageCircle,
+    Flag, Trash2
+} from 'lucide-react';
 import axios from 'axios';
 
 interface ProductImage {
@@ -16,6 +20,8 @@ interface Review {
     rating: number;
     comment: string;
     authorName: string;
+    authorId: number;
+    authorEmail: string; // Теперь это поле есть в DTO
     createdAt: string;
 }
 
@@ -95,6 +101,28 @@ export const ProductDetailsPage = () => {
         }
     };
 
+    const handleReportReview = async (reviewId: number) => {
+        try {
+            await apiClient.patch(`/reviews/${reviewId}/report`);
+            alert('Жалоба отправлена модератору. Спасибо за помощь!');
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {
+            alert('Не удалось отправить жалобу');
+        }
+    };
+
+    const handleDeleteReview = async (reviewId: number) => {
+        if (!window.confirm('Вы уверены, что хотите удалить этот отзыв?')) return;
+        try {
+            await apiClient.delete(`/reviews/admin/${reviewId}`);
+            setReviews(prev => prev.filter(r => r.id !== reviewId));
+            alert('Отзыв удален');
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {
+            alert('Ошибка при удалении отзыва');
+        }
+    };
+
     if (loading) return <div className="text-center mt-20 animate-pulse text-slate-400 font-bold tracking-widest">ЗАГРУЗКА...</div>;
     if (!product) return <div className="text-center mt-20 text-red-500 font-bold">Товар не найден</div>;
 
@@ -102,9 +130,9 @@ export const ProductDetailsPage = () => {
         <div className="container mx-auto px-4 py-8 pb-20">
             <button
                 onClick={() => navigate(-1)}
-                className="flex items-center text-slate-500 hover:text-indigo-600 mb-8 transition-colors font-semibold text-sm"
+                className="flex items-center text-slate-500 hover:text-indigo-600 mb-8 transition-colors font-semibold text-sm group"
             >
-                <ChevronLeft size={20}/> Назад к покупкам
+                <ChevronLeft size={20} className="mr-1 group-hover:-translate-x-1 transition-transform"/> Назад к покупкам
             </button>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
@@ -197,7 +225,7 @@ export const ProductDetailsPage = () => {
                 </div>
             </div>
 
-            {/* ВИДЕО */}
+            {/* ВИДЕО (ИСПРАВЛЕНО) */}
             {product.youtubeVideoId && (
                 <div className="mt-20 mb-20">
                     <div className="flex items-center mb-8">
@@ -244,16 +272,41 @@ export const ProductDetailsPage = () => {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {reviews.map((review) => (
-                            <div key={review.id} className="bg-white p-8 rounded-4xl border border-slate-100 shadow-sm transition-hover hover:shadow-md">
+                            <div key={review.id} className="bg-white p-8 rounded-4xl border border-slate-100 shadow-sm transition-hover hover:shadow-md relative group">
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
-                                        <h4 className="font-bold text-slate-800">{review.authorName}</h4>
+                                        <Link to={`/profile/${review.authorId}`} className="font-bold text-slate-800 hover:text-indigo-600 transition-colors">
+                                            {review.authorName}
+                                        </Link>
                                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{new Date(review.createdAt).toLocaleDateString()}</p>
                                     </div>
-                                    <div className="flex bg-yellow-50 px-2 py-1 rounded-lg">
-                                        {[...Array(5)].map((_, i) => (
-                                            <Star key={i} size={12} className={`${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-slate-200'}`} />
-                                        ))}
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex bg-yellow-50 px-2 py-1 rounded-lg">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star key={i} size={12} className={`${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-slate-200'}`} />
+                                            ))}
+                                        </div>
+
+                                        <div className="flex gap-1">
+                                            {user && user.email !== review.authorEmail && (
+                                                <button
+                                                    onClick={() => handleReportReview(review.id)}
+                                                    className="p-2 text-slate-300 hover:text-amber-500 transition-colors"
+                                                    title="Пожаловаться"
+                                                >
+                                                    <Flag size={16} />
+                                                </button>
+                                            )}
+                                            {user?.role === 'ROLE_ADMIN' && (
+                                                <button
+                                                    onClick={() => handleDeleteReview(review.id)}
+                                                    className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                                                    title="Удалить отзыв"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 {review.comment && (
