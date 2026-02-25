@@ -51,7 +51,7 @@ public class UserService {
                 user.getId(), user.getEmail(), user.getFullName(), user.getPhoneNumber(),
                 user.getRole().name(), user.getAvatarUrl(), user.getBio(),
                 user.getAverageRating(), user.getReviewsCount(),
-                user.getCreatedAt(), totalOrders, products
+                user.getCreatedAt(), totalOrders, user.isEnabled(), products
         );
     }
 
@@ -91,5 +91,38 @@ public class UserService {
         }
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
+    }
+
+    public List<UserProfileResponse> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(user -> getUserProfile(user.getId()))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void toggleUserStatus(Long userId) {
+        User admin = getCurrentUser();
+        User user = userRepository.findById(userId).orElseThrow();
+
+        if (admin.getId().equals(user.getId())) {
+            throw new IllegalStateException("Вы не можете заблокировать самого себя");
+        }
+
+        user.setEnabled(!user.isEnabled());
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void updateUserRole(Long userId, Role newRole) {
+        User admin = getCurrentUser();
+        User targetUser = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+        if (admin.getId().equals(targetUser.getId())) {
+            throw new IllegalStateException("Вы не можете изменить роль самому себе");
+        }
+
+        targetUser.setRole(newRole);
+        userRepository.save(targetUser);
     }
 }

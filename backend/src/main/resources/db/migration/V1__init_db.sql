@@ -13,6 +13,7 @@ CREATE TABLE users
     bio            VARCHAR(1000),
     average_rating DECIMAL(3, 2) DEFAULT 0.0,
     reviews_count  INT           DEFAULT 0,
+    is_enabled     BOOLEAN       DEFAULT TRUE,
     created_at     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
     updated_at     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

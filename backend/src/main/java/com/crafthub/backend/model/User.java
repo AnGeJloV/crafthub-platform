@@ -62,6 +62,10 @@ public class User implements UserDetails {
     @Column(name = "reviews_count")
     private Integer reviewsCount = 0;
 
+    @Builder.Default
+    @Column(name = "is_enabled")
+    private boolean enabled = true;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -99,6 +103,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled;
     }
 }

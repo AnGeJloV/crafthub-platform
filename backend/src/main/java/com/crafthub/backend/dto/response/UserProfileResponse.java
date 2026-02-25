@@ -17,6 +17,7 @@ public record UserProfileResponse(
         Integer reviewsCount,
         java.time.LocalDateTime createdAt,
         long totalOrders,
+        boolean enabled,
         List<ProductResponse> products
 ) {
 }
