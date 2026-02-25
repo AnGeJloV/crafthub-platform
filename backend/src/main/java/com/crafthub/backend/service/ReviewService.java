@@ -75,10 +75,12 @@ public class ReviewService {
 
     private void updateProductRating(Product product) {
         Double newRating = reviewRepository.calculateAverageRatingForProduct(product.getId());
-        newRating = Math.round(newRating * 100.0) / 100.0;
+        Integer count = reviewRepository.findAllByProductIdOrderByCreatedAtDesc(product.getId()).size();
+
+        newRating = Math.round(newRating * 10.0) / 10.0;
 
         product.setAverageRating(newRating);
-        product.setReviewsCount(product.getReviewsCount() + 1);
+        product.setReviewsCount(count);
         productRepository.save(product);
     }
 

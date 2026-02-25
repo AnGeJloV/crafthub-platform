@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { useAuthStore } from '../store/authStore';
-import { useCartStore } from '../store/cartStore';
-import { Link } from 'react-router-dom';
-import { Star } from 'lucide-react';
+import React, {useState} from 'react';
+import {useAuthStore} from '../store/authStore';
+import {useCartStore} from '../store/cartStore';
+import {Link} from 'react-router-dom';
+import {Star} from 'lucide-react';
 import axios from 'axios';
 
 interface ProductCardProps {
@@ -21,7 +21,7 @@ interface ProductCardProps {
     };
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({product}) => {
     const user = useAuthStore((state) => state.user);
     const addItem = useCartStore((state) => state.addItem);
     const [showToast, setShowToast] = useState(false);
@@ -49,7 +49,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col h-full relative cursor-pointer"
         >
             {showToast && (
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-green-600 text-white text-[10px] font-bold px-4 py-2 rounded-full shadow-lg animate-bounce">
+                <div
+                    className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-green-600 text-white text-[10px] font-bold px-4 py-2 rounded-full shadow-lg animate-bounce">
                     ✓ В корзине
                 </div>
             )}
@@ -59,30 +60,25 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                     src={`http://localhost:8080/uploads/${mainImage}`}
                     alt={product.name}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=Нет+фото'; }}
+                    onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=Нет+фото';
+                    }}
                 />
                 <div className="absolute top-4 left-4 flex gap-2">
-          <span className="bg-white/90 backdrop-blur-md text-indigo-700 text-[10px] font-black uppercase px-3 py-1.5 rounded-xl shadow-sm border border-indigo-50">
+          <span
+              className="bg-white/90 backdrop-blur-md text-indigo-700 text-[10px] font-black uppercase px-3 py-1.5 rounded-xl shadow-sm border border-indigo-50">
             {product.categoryDisplayName}
           </span>
-                    {/* Плашка рейтинга на фото */}
-                    {product.reviewsCount > 0 && (
-                        <div className="bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-black px-2 py-1.5 rounded-xl flex items-center shadow-sm">
-                            <Star size={10} className="text-yellow-400 fill-yellow-400 mr-1" />
-                            {product.averageRating.toFixed(1)}
-                        </div>
-                    )}
+
                 </div>
             </div>
 
             <div className="p-6 flex flex-col flex-grow">
-                <div className="flex justify-between items-start mb-1">
-                    <h3 className="text-lg font-bold text-slate-800 line-clamp-1 group-hover:text-indigo-600 transition-colors">
-                        {product.name}
-                    </h3>
-                </div>
+                <h3 className="text-lg font-bold text-slate-800 line-clamp-1 group-hover:text-indigo-600 transition-colors mb-1">
+                    {product.name}
+                </h3>
 
-                {/* Блок рейтинга под названием */}
+                {/* Звезды оставляем здесь */}
                 <div className="flex items-center mb-4 space-x-1">
                     {[...Array(5)].map((_, i) => (
                         <Star
@@ -100,8 +96,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex flex-col">
-                        <span className="text-xs text-slate-400 font-bold uppercase tracking-tighter leading-none mb-1">Цена</span>
-                        <span className="text-2xl font-black text-slate-900 leading-none">{product.price} <span className="text-xs">BYN</span></span>
+                        <span
+                            className="text-xs text-slate-400 font-bold uppercase tracking-tighter leading-none mb-1">Цена</span>
+                        <span className="text-2xl font-black text-slate-900 leading-none">{product.price} <span
+                            className="text-xs">BYN</span></span>
                     </div>
                     <div className="text-right">
                         <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1 leading-none">Мастер</p>
@@ -122,7 +120,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                         {product.stockQuantity <= 0 ? 'Нет в наличии' : 'Добавить в корзину'}
                     </button>
                 ) : !user ? (
-                    <p className="text-[10px] text-center text-slate-400 font-medium italic">Авторизуйтесь для покупки</p>
+                    <p className="text-[10px] text-center text-slate-400 font-medium italic">Авторизуйтесь для
+                        покупки</p>
                 ) : (
                     <div className="text-center py-2 bg-slate-50 rounded-xl border border-dashed border-slate-200">
                         <span className="text-[10px] text-slate-400 font-bold uppercase">Ваш товар</span>

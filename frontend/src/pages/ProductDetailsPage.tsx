@@ -137,12 +137,6 @@ export const ProductDetailsPage = () => {
                             <span className="bg-indigo-50 text-indigo-600 text-xs font-black px-3 py-1.5 rounded-lg uppercase tracking-widest border border-indigo-100">
                                 {product.categoryDisplayName}
                             </span>
-                            {product.reviewsCount > 0 && (
-                                <div className="flex items-center bg-yellow-50 text-yellow-600 px-3 py-1.5 rounded-lg border border-yellow-100 font-bold text-xs">
-                                    <Star size={14} className="mr-1 fill-yellow-600" />
-                                    {product.averageRating.toFixed(1)} ({product.reviewsCount})
-                                </div>
-                            )}
                         </div>
 
                         <h1 className="text-4xl font-black text-slate-900 mb-2">{product.name}</h1>
@@ -259,9 +253,11 @@ export const ProductDetailsPage = () => {
                                         ))}
                                     </div>
                                 </div>
-                                <p className="text-slate-600 text-sm leading-relaxed italic">
-                                    {review.comment ? `"${review.comment}"` : "Покупатель не оставил текстовый отзыв."}
-                                </p>
+                                {review.comment && (
+                                    <p className="text-slate-600 text-sm leading-relaxed italic">
+                                        "{review.comment}"
+                                    </p>
+                                )}
                             </div>
                         ))}
                     </div>
