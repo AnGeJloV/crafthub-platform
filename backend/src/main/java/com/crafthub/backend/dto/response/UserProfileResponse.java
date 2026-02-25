@@ -15,6 +15,8 @@ public record UserProfileResponse(
         String bio,
         Double averageRating,
         Integer reviewsCount,
+        java.time.LocalDateTime createdAt,
+        long totalOrders,
         List<ProductResponse> products
 ) {
 }

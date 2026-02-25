@@ -3,7 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api';
 import { useAuthStore } from '../store/authStore';
 import { ProductCard } from '../components/ProductCard';
-import { Mail, Phone, Edit3, Camera, Save, ArrowLeft, Package, Star, User as UserIcon, X } from 'lucide-react';
+import { Mail, Phone, Edit3, Camera, Save, ArrowLeft, Star, User as UserIcon, X, Calendar, ShoppingBag, ShieldCheck, Lock, PackageOpen } from 'lucide-react';
+
+interface ProductImage {
+    imageUrl: string;
+    isMain: boolean;
+}
 
 interface Product {
     id: number;
@@ -16,7 +21,7 @@ interface Product {
     sellerEmail: string;
     averageRating: number;
     reviewsCount: number;
-    images: { imageUrl: string; isMain: boolean }[];
+    images: ProductImage[];
 }
 
 interface UserProfile {
@@ -29,6 +34,8 @@ interface UserProfile {
     bio: string | null;
     averageRating: number;
     reviewsCount: number;
+    createdAt: string;
+    totalOrders: number;
     products: Product[];
 }
 
@@ -40,8 +47,10 @@ export const ProfilePage = () => {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
+    const [isPassModalOpen, setIsPassModalOpen] = useState(false);
 
     const [editForm, setEditForm] = useState({ fullName: '', phoneNumber: '', bio: '' });
+    const [passForm, setPassForm] = useState({ oldPassword: '', newPassword: '' });
 
     const isMyProfile = !id || (profile && currentUser && profile.email === currentUser.email);
 
@@ -71,14 +80,26 @@ export const ProfilePage = () => {
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            // ИСПРАВЛЕНО: путь '/users/me', так как '/api' уже в базовом URL
             await apiClient.patch('/users/me', editForm);
-            alert('Данные успешно обновлены');
+            alert('Профиль обновлен');
             setIsEditing(false);
             void fetchProfile();
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
+            console.error('Ошибка обновления профиля:', error);
             alert('Ошибка при обновлении данных');
+        }
+    };
+
+    const handlePasswordChange = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        try {
+            await apiClient.post('/users/me/password', passForm);
+            alert('Пароль успешно изменен');
+            setIsPassModalOpen(false);
+            setPassForm({ oldPassword: '', newPassword: '' });
+        } catch (error) {
+            console.error('Ошибка смены пароля:', error);
+            alert('Не удалось сменить пароль. Проверьте старый пароль.');
         }
     };
 
@@ -90,22 +111,24 @@ export const ProfilePage = () => {
                 await apiClient.post('/users/me/avatar', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
-                void fetchProfile(); // Обновляем профиль, чтобы увидеть новую аватарку
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                void fetchProfile();
             } catch (error) {
+                console.error('Ошибка загрузки аватара:', error);
                 alert('Ошибка загрузки фото');
             }
         }
     };
 
-    if (loading) return <div className="text-center mt-20 text-slate-400 font-bold animate-pulse uppercase tracking-widest">Загрузка...</div>;
+    if (loading) return <div className="text-center mt-20 text-slate-400 font-bold animate-pulse uppercase tracking-widest text-xs">Загрузка профиля...</div>;
     if (!profile) return null;
+
+    const isSeller = profile.role === 'ROLE_SELLER';
 
     return (
         <div className="container mx-auto px-4 py-8 pb-20 max-w-6xl">
             {id && (
-                <button onClick={() => navigate(-1)} className="flex items-center text-slate-400 hover:text-indigo-600 mb-8 transition-colors font-bold text-xs uppercase tracking-widest">
-                    <ArrowLeft size={16} className="mr-2" /> Назад
+                <button onClick={() => navigate(-1)} className="flex items-center text-slate-400 hover:text-indigo-600 mb-8 font-bold text-xs uppercase tracking-widest transition-colors group">
+                    <ArrowLeft size={16} className="mr-2 group-hover:-translate-x-1 transition-transform" /> Назад
                 </button>
             )}
 
@@ -113,10 +136,10 @@ export const ProfilePage = () => {
 
                 {/* ЛЕВАЯ КОЛОНКА */}
                 <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8 flex flex-col items-center text-center relative">
+                    <div className="bg-white rounded-4xl shadow-sm border border-slate-100 p-8 flex flex-col items-center relative">
 
                         <div className="relative mb-6">
-                            <div className="w-32 h-32 rounded-[2.5rem] overflow-hidden bg-slate-100 border-4 border-white shadow-xl">
+                            <div className="w-32 h-32 rounded-4xl overflow-hidden bg-slate-100 border-4 border-white shadow-xl">
                                 <img
                                     src={profile.avatarUrl ? `http://localhost:8080/uploads/${profile.avatarUrl}` : `https://ui-avatars.com/api/?name=${profile.fullName}&background=6366f1&color=fff&size=128`}
                                     className="w-full h-full object-cover"
@@ -124,7 +147,7 @@ export const ProfilePage = () => {
                                 />
                             </div>
                             {isMyProfile && (
-                                <label className="absolute -bottom-2 -right-2 bg-slate-900 text-white p-2.5 rounded-2xl cursor-pointer hover:bg-indigo-600 transition-all shadow-lg border-4 border-white">
+                                <label className="absolute -bottom-2 -right-2 bg-slate-900 text-white p-2.5 rounded-2xl cursor-pointer hover:bg-indigo-600 transition-all border-4 border-white">
                                     <Camera size={18} />
                                     <input type="file" className="hidden" accept="image/*" onChange={handleAvatarUpload} />
                                 </label>
@@ -133,137 +156,134 @@ export const ProfilePage = () => {
 
                         {isEditing ? (
                             <div className="w-full space-y-3">
-                                <input
-                                    className="w-full border-2 border-slate-50 bg-slate-50 p-3 rounded-xl text-center font-bold outline-none focus:border-indigo-500 transition-all"
-                                    value={editForm.fullName}
-                                    onChange={e => setEditForm({...editForm, fullName: e.target.value})}
-                                    placeholder="Ваше имя"
-                                />
-                                <input
-                                    className="w-full border-2 border-slate-50 bg-slate-50 p-3 rounded-xl text-center font-bold outline-none focus:border-indigo-500 transition-all"
-                                    value={editForm.phoneNumber}
-                                    onChange={e => setEditForm({...editForm, phoneNumber: e.target.value})}
-                                    placeholder="Номер телефона"
-                                />
+                                <input className="w-full border-2 border-slate-50 bg-slate-50 p-3 rounded-xl text-center font-bold outline-none focus:border-indigo-500 transition-all" value={editForm.fullName} onChange={e => setEditForm({...editForm, fullName: e.target.value})} placeholder="ФИО" />
+                                <input className="w-full border-2 border-slate-50 bg-slate-50 p-3 rounded-xl text-center font-bold outline-none focus:border-indigo-500 transition-all" value={editForm.phoneNumber} onChange={e => setEditForm({...editForm, phoneNumber: e.target.value})} placeholder="Телефон" />
                             </div>
                         ) : (
-                            <>
-                                <h2 className="text-2xl font-black text-slate-800">{profile.fullName}</h2>
-                                <span className="bg-indigo-50 text-indigo-600 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest mt-2">
-                    {profile.role.replace('ROLE_', '')}
-                </span>
-                            </>
-                        )}
-
-                        {profile.role === 'ROLE_SELLER' && profile.reviewsCount > 0 && (
-                            <div className="flex items-center mt-4 bg-yellow-50 px-4 py-2 rounded-2xl border border-yellow-100">
-                                <Star size={16} className="text-yellow-500 fill-yellow-500 mr-2" />
-                                <span className="font-black text-yellow-700">{profile.averageRating.toFixed(1)}</span>
-                                <span className="text-yellow-200 mx-2">|</span>
-                                <span className="text-xs font-bold text-yellow-600">{profile.reviewsCount} отзывов</span>
-                            </div>
-                        )}
-
-                        {!isEditing && (
-                            <div className="w-full border-t border-slate-50 mt-8 pt-8 space-y-4 text-left">
-                                <div className="flex items-center text-slate-500 text-sm font-medium">
-                                    <Mail size={16} className="mr-3 text-indigo-400" /> {profile.email}
-                                </div>
-                                <div className="flex items-center text-slate-500 text-sm font-medium">
-                                    <Phone size={16} className="mr-3 text-indigo-400" /> {profile.phoneNumber}
+                            <div className="text-center">
+                                <h2 className="text-2xl font-black text-slate-800 leading-tight">{profile.fullName}</h2>
+                                <div className="flex items-center justify-center gap-2 mt-2">
+                                    <span className="bg-indigo-50 text-indigo-600 text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">{profile.role.replace('ROLE_', '')}</span>
+                                    <div className="flex items-center text-slate-400 text-[10px] font-bold uppercase tracking-tighter">
+                                        <Calendar size={12} className="mr-1" /> с {new Date(profile.createdAt).getFullYear()} года
+                                    </div>
                                 </div>
                             </div>
                         )}
+
+                        {/* СТАТИСТИКА: Адаптивная сетка в зависимости от роли */}
+                        <div className={`grid ${isSeller ? 'grid-cols-2' : 'grid-cols-1'} gap-4 w-full mt-8`}>
+                            <div className="bg-slate-50 p-4 rounded-3xl text-center border border-slate-100">
+                                <div className="text-indigo-600 mb-1 flex justify-center"><ShoppingBag size={20} /></div>
+                                <div className="text-lg font-black text-slate-800">{profile.totalOrders}</div>
+                                <div className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{isSeller ? 'Продаж' : 'Покупок'}</div>
+                            </div>
+
+                            {/* Рейтинг только для продавцов */}
+                            {isSeller && (
+                                <div className="bg-slate-50 p-4 rounded-3xl text-center border border-slate-100">
+                                    <div className="text-yellow-500 mb-1 flex justify-center"><Star size={20} className="fill-yellow-500" /></div>
+                                    <div className="text-lg font-black text-slate-800">{(profile.averageRating || 0).toFixed(1)}</div>
+                                    <div className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Рейтинг</div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="w-full border-t border-slate-50 mt-8 pt-8 space-y-4">
+                            <div className="flex items-center text-slate-500 text-sm font-medium"><Mail size={16} className="mr-4 text-indigo-400" /> {profile.email}</div>
+                            {!isEditing && <div className="flex items-center text-slate-500 text-sm font-medium"><Phone size={16} className="mr-4 text-indigo-400" /> {profile.phoneNumber}</div>}
+                        </div>
 
                         {isMyProfile && (
-                            <div className="w-full mt-8 flex gap-2">
+                            <div className="w-full mt-8 space-y-2">
                                 {isEditing ? (
+                                    <div className="flex gap-2">
+                                        <button onClick={handleUpdateProfile} className="flex-1 bg-indigo-600 text-white py-3 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center justify-center"><Save size={16} className="mr-2" /> Сохранить</button>
+                                        <button onClick={() => setIsEditing(false)} className="bg-slate-100 text-slate-400 p-3 rounded-2xl hover:bg-slate-200 transition-all"><X size={20} /></button>
+                                    </div>
+                                ) : (
                                     <>
-                                        <button onClick={handleUpdateProfile} className="flex-1 bg-indigo-600 text-white py-3 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center justify-center">
-                                            <Save size={16} className="mr-2" /> Сохранить
+                                        <button onClick={() => setIsEditing(true)} className="w-full flex items-center justify-center py-3 border-2 border-slate-50 text-slate-500 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all">
+                                            <Edit3 size={16} className="mr-2" /> Редактировать
                                         </button>
-                                        <button onClick={() => setIsEditing(false)} className="bg-slate-100 text-slate-400 p-3 rounded-2xl hover:bg-slate-200 transition-all">
-                                            <X size={20} />
+                                        <button onClick={() => setIsPassModalOpen(true)} className="w-full flex items-center justify-center py-3 text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:text-indigo-600 transition-all">
+                                            <ShieldCheck size={14} className="mr-2" /> Безопасность
                                         </button>
                                     </>
-                                ) : (
-                                    <button onClick={() => setIsEditing(true)} className="w-full flex items-center justify-center py-3 border-2 border-slate-50 text-slate-500 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all">
-                                        <Edit3 size={16} className="mr-2" /> Редактировать
-                                    </button>
                                 )}
                             </div>
                         )}
                     </div>
 
-                    <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8">
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">О себе</h3>
+                    <div className="bg-white rounded-4xl shadow-sm border border-slate-100 p-8">
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Биография</h3>
                         {isEditing ? (
-                            <textarea
-                                className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-4 text-sm outline-none focus:border-indigo-500 transition-all font-medium"
-                                rows={5}
-                                value={editForm.bio}
-                                onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
-                                placeholder="Расскажите о себе или своих работах..."
-                            />
+                            <textarea className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-4 text-sm outline-none focus:border-indigo-500 transition-all font-medium" rows={4} value={editForm.bio} onChange={e => setEditForm({...editForm, bio: e.target.value})} placeholder="Расскажите о себе..." />
                         ) : (
-                            <p className="text-slate-600 text-sm leading-relaxed italic">
-                                {profile.bio || "Участник CraftHub, который ценит ручную работу."}
-                            </p>
+                            <p className="text-slate-600 text-sm leading-relaxed italic">{profile.bio || "Участник маркетплейса CraftHub."}</p>
                         )}
                     </div>
                 </div>
 
                 {/* ПРАВАЯ КОЛОНКА */}
                 <div className="lg:col-span-2">
-                    {profile.role === 'ROLE_SELLER' ? (
+                    {isSeller ? (
                         <>
                             <div className="flex items-center justify-between mb-8">
-                                <h3 className="text-2xl font-black text-slate-800 flex items-center uppercase tracking-tighter">
-                                    <Package size={24} className="mr-3 text-indigo-500" /> Изделия мастера
-                                </h3>
-                                <span className="bg-white px-3 py-1 rounded-full border border-slate-100 text-slate-400 font-bold text-xs">{profile.products.length} товаров</span>
+                                <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">Витрина мастера</h3>
+                                <span className="bg-white px-3 py-1 rounded-full border border-slate-100 text-slate-400 font-bold text-xs">{profile.products.length} изделий</span>
                             </div>
-
                             {profile.products.length === 0 ? (
-                                <div className="text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
-                                    <PackageOpen className="mx-auto text-slate-100 mb-4" size={64} />
-                                    <p className="text-slate-300 font-bold uppercase tracking-widest text-xs">Товары на модерации или отсутствуют</p>
+                                <div className="text-center py-24 bg-white rounded-4xl border-2 border-dashed border-slate-100">
+                                    <PackageOpen size={64} className="mx-auto text-slate-100 mb-4" />
+                                    <p className="text-slate-300 font-bold uppercase tracking-widest text-xs">Товары отсутствуют</p>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {profile.products.map(product => (
-                                        <ProductCard key={product.id} product={product} />
-                                    ))}
+                                    {profile.products.map(p => <ProductCard key={p.id} product={p} />)}
                                 </div>
                             )}
                         </>
                     ) : (
-                        <div className="h-full flex flex-col items-center justify-center bg-white rounded-[3rem] border border-slate-100 p-12 text-center shadow-sm">
-                            <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-[2rem] flex items-center justify-center mb-6">
+                        <div className="h-full flex flex-col items-center justify-center bg-white rounded-4xl border border-slate-100 p-12 text-center shadow-sm min-h-[400px]">
+                            <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center mb-6 shadow-inner shadow-indigo-100/50">
                                 <UserIcon size={40} />
                             </div>
                             <h3 className="text-2xl font-black text-slate-800 mb-2 uppercase tracking-tighter">Покупатель</h3>
-                            <p className="text-slate-400 max-w-sm leading-relaxed font-medium">
-                                Этот пользователь пока только присматривается к уникальным изделиям наших мастеров.
+                            <p className="text-slate-400 max-w-sm font-medium leading-relaxed">
+                                Этот пользователь пока не является мастером, но активно поддерживает локальных производителей.
                             </p>
-                            {isMyProfile && profile.role === 'ROLE_USER' && (
+                            {isMyProfile && (
                                 <button
                                     onClick={() => navigate('/become-seller')}
-                                    className="mt-8 bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all active:scale-95"
+                                    className="mt-8 bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all active:scale-95"
                                 >
-                                    Стать мастером
+                                    Хочу стать мастером
                                 </button>
                             )}
                         </div>
                     )}
                 </div>
-
             </div>
+
+            {/* МОДАЛКА ПАРОЛЯ */}
+            {isPassModalOpen && (
+                <div className="fixed inset-0 z-100 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4">
+                    <form onSubmit={handlePasswordChange} className="bg-white rounded-4xl p-10 max-w-md w-full shadow-2xl animate-in zoom-in duration-300">
+                        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-6"><Lock size={32} /></div>
+                        <h3 className="text-2xl font-black text-slate-800 mb-2">Смена пароля</h3>
+                        <p className="text-slate-400 text-sm mb-8 font-medium">Обновите ваши данные для защиты аккаунта.</p>
+                        <div className="space-y-4 mb-8">
+                            <input type="password" placeholder="Текущий пароль" required className="w-full border-2 border-slate-50 bg-slate-50 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold" value={passForm.oldPassword} onChange={e => setPassForm({...passForm, oldPassword: e.target.value})} />
+                            <input type="password" placeholder="Новый пароль" required className="w-full border-2 border-slate-50 bg-slate-50 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold" value={passForm.newPassword} onChange={e => setPassForm({...passForm, newPassword: e.target.value})} />
+                        </div>
+                        <div className="flex gap-4">
+                            <button type="submit" className="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-lg active:scale-95">Обновить</button>
+                            <button type="button" onClick={() => setIsPassModalOpen(false)} className="flex-1 bg-slate-100 text-slate-400 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all">Отмена</button>
+                        </div>
+                    </form>
+                </div>
+            )}
         </div>
     );
 };
-
-// Вспомогательный компонент для пустой коробки
-const PackageOpen = ({ size, className }: { size: number, className: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m8 3 4 8 5-5-5 15-2-10z"/></svg>
-);

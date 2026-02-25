@@ -1,5 +1,6 @@
 package com.crafthub.backend.controller;
 
+import com.crafthub.backend.dto.request.ChangePasswordRequest;
 import com.crafthub.backend.dto.request.UpdateProfileRequest;
 import com.crafthub.backend.dto.response.UserProfileResponse;
 import com.crafthub.backend.service.UserService;
@@ -35,5 +36,11 @@ public class UserController {
     @PostMapping("/me/avatar")
     public ResponseEntity<String> updateAvatar(@RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(userService.updateAvatar(file));
+    }
+
+    @PostMapping("/me/password")
+    public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        userService.changePassword(request);
+        return ResponseEntity.ok().build();
     }
 }
