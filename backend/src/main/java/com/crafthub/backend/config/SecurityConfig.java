@@ -55,6 +55,8 @@ public class SecurityConfig {
                         .requestMatchers("/uploads/products/**").permitAll()
                         .requestMatchers("/uploads/avatars/**").permitAll()
                         .requestMatchers("/api/verification/**").permitAll()
+                        .requestMatchers("/api/stats/seller").hasRole("SELLER")
+                        .requestMatchers("/api/stats/admin").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

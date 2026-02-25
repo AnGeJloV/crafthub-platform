@@ -1,22 +1,23 @@
-import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
-import { HomePage } from './pages/HomePage';
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { VerificationPage } from './pages/VerificationPage';
-import { AdminPage } from './pages/AdminPage';
-import { MyProductsPage } from './pages/MyProductsPage';
-import { AddProductPage } from './pages/AddProductPage';
-import { EditProductPage } from './pages/EditProductPage';
-import { CartPage } from './pages/CartPage';
-import { OrdersPage } from './pages/OrdersPage';
-import { ProductDetailsPage } from './pages/ProductDetailsPage';
-import { ChatPage } from './pages/ChatPage';
-import { NotificationBell } from './components/NotificationBell';
-import { useAuthStore } from './store/authStore';
-import { useCartStore } from './store/cartStore';
-import { Package, UserCircle, LogOut, MessageCircle, ShoppingCart } from 'lucide-react';
+import {useEffect} from 'react';
+import {BrowserRouter, Link, Route, Routes, useNavigate} from 'react-router-dom';
+import {HomePage} from './pages/HomePage';
+import {LoginPage} from './pages/LoginPage';
+import {RegisterPage} from './pages/RegisterPage';
+import {VerificationPage} from './pages/VerificationPage';
+import {AdminPage} from './pages/AdminPage';
+import {MyProductsPage} from './pages/MyProductsPage';
+import {AddProductPage} from './pages/AddProductPage';
+import {EditProductPage} from './pages/EditProductPage';
+import {CartPage} from './pages/CartPage';
+import {OrdersPage} from './pages/OrdersPage';
+import {ProductDetailsPage} from './pages/ProductDetailsPage';
+import {ChatPage} from './pages/ChatPage';
+import {NotificationBell} from './components/NotificationBell';
+import {useAuthStore} from './store/authStore';
+import {useCartStore} from './store/cartStore';
+import {LogOut, MessageCircle, Package, ShoppingCart, TrendingUp, UserCircle} from 'lucide-react';
 import {ProfilePage} from "./pages/ProfilePage.tsx";
+import {AnalyticsPage} from "./pages/AnalyticsPage.tsx";
 
 const Header = () => {
     const { user, logout } = useAuthStore();
@@ -54,6 +55,12 @@ const Header = () => {
                             {user.role === 'ROLE_SELLER' && (
                                 <Link to="/my-products" className="bg-indigo-600 px-4 py-2 rounded-xl hover:bg-indigo-700 transition-all text-xs font-black uppercase tracking-widest hidden md:block">
                                     Мои товары
+                                </Link>
+                            )}
+
+                            {user.role === 'ROLE_SELLER' && (
+                                <Link to="/analytics" className="hover:text-indigo-300 text-sm font-bold uppercase tracking-widest px-2" title="Аналитика">
+                                    <TrendingUp size={22} />
                                 </Link>
                             )}
 
@@ -139,8 +146,9 @@ function App() {
                         <Route path="/orders" element={<OrdersPage/>}/>
                         <Route path="/product/:id" element={<ProductDetailsPage/>}/>
                         <Route path="/chat" element={<ChatPage/>}/>
-                        <Route path="/profile" element={<ProfilePage />} />
-                        <Route path="/profile/:id" element={<ProfilePage />} />
+                        <Route path="/profile" element={<ProfilePage/>}/>
+                        <Route path="/profile/:id" element={<ProfilePage/>}/>
+                        <Route path="/analytics" element={<AnalyticsPage/>}/>
                     </Routes>
                 </main>
             </div>
