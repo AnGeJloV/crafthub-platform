@@ -17,15 +17,22 @@ export const CartPage = () => {
     const confirmPurchase = async () => {
         setIsProcessing(true);
         try {
+            const orderItems = items.map(item => ({
+                productId: item.productId,
+                quantity: item.quantity
+            }));
+
             await apiClient.post('/orders', {
                 shippingAddress: fullShippingAddress,
-                items: items.map(i => ({ productId: i.productId, quantity: i.quantity }))
+                items: orderItems
             });
+
             clearCartLocal();
-            alert('Заказ успешно оплачен!');
-            navigate('/');
+            alert('Заказ успешно оформлен!');
+            navigate('/orders');
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
-            alert('Ошибка при оформлении. Возможно, товар закончился.');
+            alert('Ошибка при оформлении заказа');
         } finally {
             setIsProcessing(false);
             setIsConfirming(false);

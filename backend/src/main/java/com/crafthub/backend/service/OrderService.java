@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,55 +27,76 @@ public class OrderService {
     private final CartService cartService;
     private final NotificationService notificationService;
 
-    @Transactional
-    public OrderResponse createOrder(OrderRequest request) {
+    private record OrderItemData(Product product, int quantity) {}
 
+    @Transactional
+    public List<OrderResponse> createOrder(OrderRequest request) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User buyer = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+                .orElseThrow(() -> new RuntimeException("Покупатель не найден"));
 
-        Order order = Order.builder()
-                .buyer(buyer)
-                .shippingAddress(request.shippingAddress())
-                .status(OrderStatus.PAID)
-                .totalAmount(BigDecimal.ZERO)
-                .build();
-
-        List<OrderItem> orderItems = new ArrayList<>();
-        BigDecimal total = BigDecimal.ZERO;
-
+        List<OrderItemData> itemsData = new ArrayList<>();
         for (OrderRequest.OrderItemRequest itemReq : request.items()) {
             Product product = productRepository.findById(itemReq.productId())
-                    .orElseThrow(() -> new RuntimeException("Товар не найден: " + itemReq.productId()));
+                    .orElseThrow(() -> new RuntimeException("Товар не найден ID: " + itemReq.productId()));
 
             if (product.getStockQuantity() < itemReq.quantity()) {
                 throw new IllegalStateException("Недостаточно товара на складе: " + product.getName());
             }
-
-            product.setStockQuantity(product.getStockQuantity() - itemReq.quantity());
-            productRepository.save(product);
-
-            OrderItem orderItem = OrderItem.builder()
-                    .order(order)
-                    .product(product)
-                    .quantity(itemReq.quantity())
-                    .priceAtPurchase(product.getPrice())
-                    .build();
-
-            orderItems.add(orderItem);
-
-            total = total.add(product.getPrice().multiply(BigDecimal.valueOf(itemReq.quantity())));
+            itemsData.add(new OrderItemData(product, itemReq.quantity()));
         }
 
-        order.setItems(orderItems);
-        order.setTotalAmount(total);
+        Map<User, List<OrderItemData>> ordersBySeller = itemsData.stream()
+                .collect(Collectors.groupingBy(item -> item.product().getSeller()));
 
-        Order savedOrder = orderRepository.save(order);
+        List<OrderResponse> createdOrders = new ArrayList<>();
+
+        for (Map.Entry<User, List<OrderItemData>> entry : ordersBySeller.entrySet()) {
+            User seller = entry.getKey();
+            List<OrderItemData> sellerItems = entry.getValue();
+
+            Order order = Order.builder()
+                    .buyer(buyer)
+                    .shippingAddress(request.shippingAddress())
+                    .status(OrderStatus.PAID)
+                    .totalAmount(BigDecimal.ZERO)
+                    .build();
+
+            List<OrderItem> orderItems = new ArrayList<>();
+            BigDecimal sellerTotal = BigDecimal.ZERO;
+
+            for (OrderItemData itemData : sellerItems) {
+                Product product = itemData.product();
+
+                product.setStockQuantity(product.getStockQuantity() - itemData.quantity());
+                productRepository.save(product);
+
+                OrderItem orderItem = OrderItem.builder()
+                        .order(order)
+                        .product(product)
+                        .quantity(itemData.quantity())
+                        .priceAtPurchase(product.getPrice())
+                        .build();
+
+                orderItems.add(orderItem);
+                sellerTotal = sellerTotal.add(product.getPrice().multiply(BigDecimal.valueOf(itemData.quantity())));
+            }
+
+            order.setItems(orderItems);
+            order.setTotalAmount(sellerTotal);
+            Order savedOrder = orderRepository.save(order);
+
+            notificationService.createNotification(seller,
+                    "У вас новый заказ #" + savedOrder.getId() + " от " + buyer.getFullName(),
+                    NotificationType.ORDER);
+
+            createdOrders.add(mapToResponse(savedOrder));
+        }
 
         Cart cart = cartService.getOrCreateCart();
         cartService.clearCart(cart);
 
-        return mapToResponse(savedOrder);
+        return createdOrders;
     }
 
     private OrderResponse mapToResponse(Order order) {
