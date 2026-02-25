@@ -102,6 +102,9 @@ public class OrderService {
     }
 
     private OrderResponse mapToResponse(Order order) {
+
+        User seller = order.getItems().get(0).getProduct().getSeller();
+
         List<OrderResponse.OrderItemResponse> itemResponses = order.getItems().stream()
                 .map(item -> new OrderResponse.OrderItemResponse(
                         item.getProduct().getId(),
@@ -115,6 +118,8 @@ public class OrderService {
                 order.getId(),
                 order.getBuyer().getId(),
                 order.getBuyer().getFullName(),
+                seller.getId(),
+                seller.getFullName(),
                 order.getTotalAmount(),
                 order.getStatus(),
                 order.getShippingAddress(),

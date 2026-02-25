@@ -48,9 +48,11 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Role role;
 
+    @Builder.Default
     @Column(name = "average_rating", columnDefinition = "DECIMAL(3,2)")
     private Double averageRating = 0.0;
 
+    @Builder.Default
     @Column(name = "reviews_count")
     private Integer reviewsCount = 0;
 

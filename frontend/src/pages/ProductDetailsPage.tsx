@@ -223,7 +223,7 @@ export const ProductDetailsPage = () => {
                         <p className="text-slate-400 font-medium">Мнения людей, которые уже приобрели это изделие</p>
                     </div>
                     <div className="text-right">
-                        <div className="text-4xl font-black text-slate-900">{product.averageRating.toFixed(1)}</div>
+                        <div className="text-4xl font-black text-slate-900">{(product.averageRating || 0).toFixed(1)}</div>
                         <div className="flex justify-end my-1">
                             {[...Array(5)].map((_, i) => (
                                 <Star key={i} size={16} className={`${i < Math.round(product.averageRating) ? 'text-yellow-400 fill-yellow-400' : 'text-slate-200'}`} />

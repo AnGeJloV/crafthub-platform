@@ -10,13 +10,15 @@ interface OrderItem {
     productName: string;
     quantity: number;
     priceAtPurchase: number;
-    isReviewed: boolean; // Добавили поле
+    isReviewed: boolean;
 }
 
 interface Order {
     id: number;
     buyerId: number;
     buyerName: string;
+    sellerId: number;
+    sellerName: string;
     totalAmount: number;
     status: 'PAID' | 'SHIPPED' | 'COMPLETED' | 'CANCELLED' | 'DISPUTED';
     shippingAddress: string;
@@ -88,15 +90,24 @@ export const OrdersPage = () => {
 
     const handleOpenChat = async (order: Order) => {
         const productId = order.items[0].productId;
-        const recipientId = activeTab === 'sales' ? order.buyerId : '';
+
+        const recipientId = activeTab === 'sales' ? order.buyerId : order.sellerId;
+        const recipientName = activeTab === 'sales' ? order.buyerName : order.sellerName;
+
         try {
-            const queryUrl = `/chat/find?productId=${productId}${recipientId ? `&recipientId=${recipientId}` : ''}`;
+            const queryUrl = `/chat/find?productId=${productId}&recipientId=${recipientId}`;
             const res = await apiClient.get(queryUrl);
             const existingId = res.data;
-            if (existingId) navigate(`/chat?dialogue=${existingId}`);
-            else navigate(`/chat?product=${productId}&recipient=${recipientId}&name=${encodeURIComponent(order.buyerName)}`);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (e) { alert('Ошибка чата'); }
+
+            if (existingId) {
+                navigate(`/chat?dialogue=${existingId}`);
+            } else {
+                navigate(`/chat?product=${productId}&recipient=${recipientId}&name=${encodeURIComponent(recipientName)}`);
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Ошибка при открытии чата');
+        }
     };
 
     const submitReview = async () => {
@@ -112,7 +123,7 @@ export const OrdersPage = () => {
             setReviewModal({ isOpen: false, productId: null, orderId: null, productName: '' });
             setRating(5);
             setComment('');
-            void fetchOrders(); // Обновляем заказы, чтобы кнопка исчезла
+            void fetchOrders();
         } catch (error) {
             if (axios.isAxiosError(error)) alert(error.response?.data?.message || 'Ошибка');
         } finally {
@@ -257,7 +268,6 @@ export const OrdersPage = () => {
                 )}
             </div>
 
-            {/* МОДАЛКА ОТЗЫВА */}
             {reviewModal.isOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-[2.5rem] p-10 max-w-md w-full shadow-2xl animate-in zoom-in duration-300">

@@ -13,6 +13,8 @@ public record OrderResponse(
         Long id,
         Long buyerId,
         String buyerName,
+        Long sellerId,
+        String sellerName,
         BigDecimal totalAmount,
         OrderStatus status,
         String shippingAddress,
