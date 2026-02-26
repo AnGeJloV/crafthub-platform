@@ -40,6 +40,7 @@ public class SecurityConfig {
     }
 
     private final JwtAuthenticationFilter jwtAuthFilter;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -58,6 +59,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/stats/seller").hasRole("SELLER")
                         .requestMatchers("/api/stats/admin").hasRole("ADMIN")
                         .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2SuccessHandler)
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

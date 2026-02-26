@@ -18,6 +18,7 @@ import {useCartStore} from './store/cartStore';
 import {LogOut, MessageCircle, Package, ShoppingCart, TrendingUp, UserCircle} from 'lucide-react';
 import {ProfilePage} from "./pages/ProfilePage.tsx";
 import {AnalyticsPage} from "./pages/AnalyticsPage.tsx";
+import {OAuth2RedirectHandler} from "./pages/OAuth2RedirectHandler.tsx";
 
 const Header = () => {
     const { user, logout } = useAuthStore();
@@ -149,6 +150,7 @@ function App() {
                         <Route path="/profile" element={<ProfilePage/>}/>
                         <Route path="/profile/:id" element={<ProfilePage/>}/>
                         <Route path="/analytics" element={<AnalyticsPage/>}/>
+                        <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
                     </Routes>
                 </main>
             </div>

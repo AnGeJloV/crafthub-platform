@@ -9,7 +9,6 @@ import { useAuthStore } from '../store/authStore';
  * Страница авторизации пользователя.
  * После успешного входа данные сохраняются в Zustand store и localStorage.
  */
-
 export const LoginPage = () => {
     const navigate = useNavigate();
     const setAuth = useAuthStore((state) => state.setAuth);
@@ -21,7 +20,6 @@ export const LoginPage = () => {
         e.preventDefault();
         setError(null);
 
-        // Валидация
         if (!email.trim() || !password.trim()) {
             setError('Пожалуйста, заполните все поля.');
             return;
@@ -39,18 +37,14 @@ export const LoginPage = () => {
                 password,
             });
 
-            // Извлекаем данные из ответа
             const { token, email: userEmail, fullName, role } = response.data;
 
-            // Сохраняем состояние в Zustand
             setAuth({ email: userEmail, fullName, role }, token);
 
-            // Дублируем токен в localStorage для работы axios interceptor
             localStorage.setItem('authToken', token);
 
             console.log('Успешный вход', token);
 
-            // Перенаправляем на главную страницу
             navigate('/');
 
         } catch (err) {
@@ -102,6 +96,21 @@ export const LoginPage = () => {
                     Войти
                 </button>
             </form>
+
+            <div className="mt-6">
+                <div className="relative mb-6">
+                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
+                    <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400 font-bold">Или войти через</span></div>
+                </div>
+
+                <a
+                    href="http://localhost:8080/oauth2/authorization/google"
+                    className="w-full flex justify-center items-center py-3 px-4 border-2 border-slate-100 rounded-2xl shadow-sm text-sm font-bold text-slate-700 bg-white hover:bg-slate-50 transition-all active:scale-[0.98]"
+                >
+                    <img src="https://www.svgrepo.com/show/355037/google.svg" className="w-5 h-5 mr-3" alt="Google" />
+                    Google Аккаунт
+                </a>
+            </div>
 
             <div className="mt-6 text-center text-sm text-gray-600">
                 Нет аккаунта?{' '}
