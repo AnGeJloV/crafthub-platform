@@ -37,10 +37,9 @@ public class VerificationController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Resource> getFile(HttpServletRequest request) {
         try {
-            String path = new AntPathMatcher().extractPathWithinPattern(
-                    "/api/verification/files/**", request.getRequestURI());
+            String fullPath = request.getRequestURI().split("/api/verification/files/")[1];
 
-            Path filePath = Paths.get(uploadPath).resolve(path).normalize();
+            Path filePath = Paths.get(uploadPath).resolve(fullPath).normalize();
             Resource resource = new UrlResource(filePath.toUri());
 
             if (resource.exists() || resource.isReadable()) {
