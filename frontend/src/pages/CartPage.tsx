@@ -1,14 +1,18 @@
-import { useState } from 'react';
-import { useCartStore } from '../store/cartStore';
-import { useNavigate } from 'react-router-dom';
+import {useState} from 'react';
+import {useCartStore} from '../store/cartStore';
+import {useNavigate} from 'react-router-dom';
 import apiClient from '../api';
-import { Minus, Plus, Trash2 } from 'lucide-react';
+import {Minus, Plus, Trash2} from 'lucide-react';
+
+/**
+ * Корзина покупок: управление количеством, расчет суммы и форма "Безопасной сделки"
+ * */
 
 export const CartPage = () => {
-    const { items, totalAmount, clearCartLocal, updateQuantity, removeItem, clearCartServer } = useCartStore();
+    const {items, totalAmount, clearCartLocal, updateQuantity, removeItem, clearCartServer} = useCartStore();
     const navigate = useNavigate();
 
-    const [address, setAddress] = useState({ city: '', street: '', house: '', index: '' });
+    const [address, setAddress] = useState({city: '', street: '', house: '', index: ''});
     const [isConfirming, setIsConfirming] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -63,8 +67,10 @@ export const CartPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 <div className="lg:col-span-2 space-y-4">
                     {items.map((item) => (
-                        <div key={item.productId} className="flex items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100 group">
-                            <img src={`http://localhost:8080/uploads/${item.imageUrl}`} className="w-24 h-24 object-cover rounded-xl" alt="" />
+                        <div key={item.productId}
+                             className="flex items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100 group">
+                            <img src={`http://localhost:8080/uploads/${item.imageUrl}`}
+                                 className="w-24 h-24 object-cover rounded-xl" alt=""/>
 
                             <div className="ml-6 flex-grow">
                                 <h4 className="font-bold text-lg text-gray-800">{item.productName}</h4>
@@ -77,14 +83,14 @@ export const CartPage = () => {
                                         disabled={item.quantity <= 1}
                                         className="w-8 h-8 flex items-center justify-center rounded-xl border-2 border-gray-100 text-gray-400 hover:border-indigo-500 hover:text-indigo-500 disabled:opacity-20 disabled:hover:border-gray-100 transition-all"
                                     >
-                                        <Minus size={14} strokeWidth={3} />
+                                        <Minus size={14} strokeWidth={3}/>
                                     </button>
                                     <span className="font-black text-slate-700 w-4 text-center">{item.quantity}</span>
                                     <button
                                         onClick={() => updateQuantity(item.productId, item.quantity + 1)}
                                         className="w-8 h-8 flex items-center justify-center rounded-xl border-2 border-gray-100 text-gray-400 hover:border-indigo-500 hover:text-indigo-500 transition-all"
                                     >
-                                        <Plus size={14} strokeWidth={3} />
+                                        <Plus size={14} strokeWidth={3}/>
                                     </button>
                                 </div>
                             </div>
@@ -95,10 +101,11 @@ export const CartPage = () => {
                                     className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all self-end"
                                     title="Удалить"
                                 >
-                                    <Trash2 size={18} />
+                                    <Trash2 size={18}/>
                                 </button>
                                 <p className="font-black text-xl text-slate-900">
-                                    {(item.price * item.quantity).toFixed(2)} <span className="text-[10px] text-gray-400">BYN</span>
+                                    {(item.price * item.quantity).toFixed(2)} <span
+                                    className="text-[10px] text-gray-400">BYN</span>
                                 </p>
                             </div>
                         </div>
@@ -109,11 +116,21 @@ export const CartPage = () => {
                 <div className="bg-white p-6 rounded-2xl shadow-lg border h-fit sticky top-4">
                     <h3 className="text-lg font-bold mb-4 text-gray-800">Адрес доставки</h3>
                     <div className="space-y-3 mb-6 text-sm">
-                        <input placeholder="Город" className="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" value={address.city} onChange={e => setAddress({...address, city: e.target.value})} />
-                        <input placeholder="Улица" className="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" value={address.street} onChange={e => setAddress({...address, street: e.target.value})} />
+                        <input placeholder="Город"
+                               className="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                               value={address.city} onChange={e => setAddress({...address, city: e.target.value})}/>
+                        <input placeholder="Улица"
+                               className="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                               value={address.street} onChange={e => setAddress({...address, street: e.target.value})}/>
                         <div className="grid grid-cols-2 gap-2">
-                            <input placeholder="Дом / Кв" className="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" value={address.house} onChange={e => setAddress({...address, house: e.target.value})} />
-                            <input placeholder="Индекс" className="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" value={address.index} onChange={e => setAddress({...address, index: e.target.value})} />
+                            <input placeholder="Дом / Кв"
+                                   className="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                                   value={address.house}
+                                   onChange={e => setAddress({...address, house: e.target.value})}/>
+                            <input placeholder="Индекс"
+                                   className="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                                   value={address.index}
+                                   onChange={e => setAddress({...address, index: e.target.value})}/>
                         </div>
                     </div>
 
@@ -126,7 +143,7 @@ export const CartPage = () => {
 
                     <button
                         onClick={() => {
-                            if(!address.city || !address.street) return alert('Введите адрес');
+                            if (!address.city || !address.street) return alert('Введите адрес');
                             setIsConfirming(true);
                         }}
                         className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-md active:scale-[0.98]"
@@ -138,11 +155,13 @@ export const CartPage = () => {
 
             {/* Модальное окно подтверждения */}
             {isConfirming && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl">
                         <h3 className="text-xl font-bold mb-2 text-gray-800">Безопасная сделка</h3>
                         <p className="text-gray-500 text-sm mb-6 leading-relaxed">
-                            Вы подтверждаете покупку? Средства будут заблокированы системой и переведены мастеру только после получения вами товара.
+                            Вы подтверждаете покупку? Средства будут заблокированы системой и переведены мастеру только
+                            после получения вами товара.
                         </p>
                         <div className="bg-indigo-50 p-4 rounded-xl mb-6 text-xs text-indigo-800">
                             <span className="font-bold uppercase block mb-1 opacity-60 text-[10px]">Адрес:</span>

@@ -3,6 +3,9 @@ package com.crafthub.backend.dto.response;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * Данные товара для карточки в каталоге
+ */
 public record ProductResponse(
         Long id,
         String name,

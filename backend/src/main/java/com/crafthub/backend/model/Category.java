@@ -22,8 +22,8 @@ public class Category {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String name;
+    private String name; // системное имя
 
     @Column(name = "display_name", nullable = false)
-    private String displayName;
+    private String displayName; // имя которое отображается пользователю
 }

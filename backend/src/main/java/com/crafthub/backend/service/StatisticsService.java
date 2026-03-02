@@ -13,6 +13,9 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Сервис управления аналитикой
+ */
 @Service
 @RequiredArgsConstructor
 public class StatisticsService {

@@ -5,6 +5,10 @@ import {Link} from 'react-router-dom';
 import {Star} from 'lucide-react';
 import axios from 'axios';
 
+/**
+ * Карточка товара для отображения в каталоге, на витрине мастера и в поиске
+ */
+
 interface ProductCardProps {
     product: {
         id: number;

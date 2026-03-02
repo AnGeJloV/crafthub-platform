@@ -23,8 +23,9 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
-    public void register(RegisterRequest request){
-        if (userRepository.findByEmail(request.email()).isPresent()){
+    // Проверяет уникальность email и шифрует пароль перед сохранением в БД
+    public void register(RegisterRequest request) {
+        if (userRepository.findByEmail(request.email()).isPresent()) {
             throw new IllegalStateException("Пользователь с электронной почтой уже существует");
         }
 
@@ -39,6 +40,7 @@ public class AuthService {
         userRepository.save(user);
     }
 
+    // Проверяет пароль через AuthenticationManager и выдает JWT-токен
     public LoginResponse login(LoginRequest request) {
         // Аутентификация с помощью Spring Security
         authenticationManager.authenticate(

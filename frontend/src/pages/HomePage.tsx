@@ -1,15 +1,23 @@
-import { useEffect, useState } from 'react';
+import {useEffect, useState} from 'react';
 import apiClient from '../api';
-import { ProductCard } from '../components/ProductCard';
+import {ProductCard} from '../components/ProductCard';
+
+/**
+ * Главная страница: поиск, фильтрация по категориям и общий каталог товаров
+ */
 
 interface Product {
     id: number;
     name: string;
     description: string;
     price: number;
+    stockQuantity: number;
     categoryDisplayName: string;
-    imageUrl: string;
     sellerName: string;
+    sellerEmail: string;
+    averageRating: number;
+    reviewsCount: number;
+    images: { imageUrl: string; isMain: boolean }[];
 }
 
 interface Category {
@@ -23,7 +31,6 @@ export const HomePage = () => {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Состояния для фильтров
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
 
@@ -42,21 +49,20 @@ export const HomePage = () => {
                 setLoading(false);
             }
         };
-        fetchData();
+        void fetchData();
     }, []);
 
-    // Логика фильтрации (выполняется на клиенте для мгновенного отклика)
     const filteredProducts = products.filter(product => {
         const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesCategory = selectedCategory === 'ALL' || product.categoryDisplayName === categories.find(c => c.name === selectedCategory)?.displayName;
         return matchesSearch && matchesCategory;
     });
 
-    if (loading) return <div className="text-center mt-20 animate-pulse text-gray-400">Загрузка каталога товаров...</div>;
+    if (loading) return <div className="text-center mt-20 animate-pulse text-gray-400">Загрузка каталога
+        товаров...</div>;
 
     return (
         <div className="container mx-auto px-4 py-8">
-
             <div className="text-center mb-12">
                 <h1 className="text-4xl font-black text-gray-900 mb-4">Найдите уникальные вещи</h1>
                 <p className="text-gray-500 max-w-xl mx-auto mb-8">
@@ -107,7 +113,7 @@ export const HomePage = () => {
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                     {filteredProducts.map(product => (
-                        <ProductCard key={product.id} product={product} />
+                        <ProductCard key={product.id} product={product}/>
                     ))}
                 </div>
             )}

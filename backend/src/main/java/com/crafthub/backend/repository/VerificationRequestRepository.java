@@ -7,6 +7,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * Работа с заявками на статус продавца.
+ */
 @Repository
 public interface VerificationRequestRepository extends JpaRepository<VerificationRequest, Long> {
     // Найти все заявки конкретного пользователя

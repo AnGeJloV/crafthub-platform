@@ -6,9 +6,9 @@ import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
 /**
- * Страница авторизации пользователя.
- * После успешного входа данные сохраняются в Zustand store и localStorage.
+ * Страница входа в систему с поддержкой обычной авторизации и Google OAuth2
  */
+
 export const LoginPage = () => {
     const navigate = useNavigate();
     const setAuth = useAuthStore((state) => state.setAuth);

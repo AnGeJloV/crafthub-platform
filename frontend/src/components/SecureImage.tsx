@@ -1,5 +1,9 @@
-import { useEffect, useState } from 'react';
+import {useEffect, useState} from 'react';
 import apiClient from '../api';
+
+/**
+ * Компонент для загрузки изображений через API (нужен для защищенных документов админа)
+ */
 
 interface SecureImageProps {
     src: string;
@@ -7,7 +11,7 @@ interface SecureImageProps {
     alt?: string;
 }
 
-export const SecureImage = ({ src, className, alt }: SecureImageProps) => {
+export const SecureImage = ({src, className, alt}: SecureImageProps) => {
     const [imageSrc, setImageSrc] = useState<string>('');
 
     useEffect(() => {
@@ -32,10 +36,11 @@ export const SecureImage = ({ src, className, alt }: SecureImageProps) => {
     }, [src]);
 
     if (!imageSrc) return (
-        <div className={`${className} bg-gray-200 animate-pulse flex items-center justify-center text-xs text-gray-400`}>
+        <div
+            className={`${className} bg-gray-200 animate-pulse flex items-center justify-center text-xs text-gray-400`}>
             Загрузка...
         </div>
     );
 
-    return <img src={imageSrc} className={className} alt={alt} />;
+    return <img src={imageSrc} className={className} alt={alt}/>;
 };

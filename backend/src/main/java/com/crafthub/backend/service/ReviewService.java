@@ -11,6 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Логика отзывов и рейтингов
+ */
 @Service
 @RequiredArgsConstructor
 public class ReviewService {

@@ -37,7 +37,7 @@ public class Product {
     private BigDecimal price;
 
     @Column(nullable = false)
-    private Integer stockQuantity;
+    private Integer stockQuantity; // остаток на складе
 
     @Column(name = "youtube_video_id")
     private String youtubeVideoId;
@@ -47,12 +47,14 @@ public class Product {
     private ProductStatus status;
 
     @Column(name = "moderation_comment")
-    private String moderationComment;
+    private String moderationComment; // причина отказа
 
+    // Связь с категорией
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
+    // Чей товар
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
@@ -60,6 +62,7 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> images;
 
+    // Кешированный рейтинг
     @Builder.Default
     @Column(name = "average_rating", columnDefinition = "DECIMAL(3,2)")
     private Double averageRating = 0.0;

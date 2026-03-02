@@ -12,6 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Сервис управления уведомлениями
+ */
 @Service
 @RequiredArgsConstructor
 public class NotificationService {

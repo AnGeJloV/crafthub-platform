@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Контроллер для управления корзиной покупок.
+ * Контроллер для управления корзиной покупок
  */
 @RestController
 @RequestMapping("/api/cart")

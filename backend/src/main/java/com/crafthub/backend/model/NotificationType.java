@@ -1,8 +1,11 @@
 package com.crafthub.backend.model;
 
+/**
+ * Тип уведомления
+ */
 public enum NotificationType {
-    VERIFICATION,
-    ORDER,
-    PRODUCT,
-    MESSAGE
+    VERIFICATION, // верификация
+    ORDER, // увед по заказу
+    PRODUCT, // по продукту
+    MESSAGE // пришло новое сообщение
 }

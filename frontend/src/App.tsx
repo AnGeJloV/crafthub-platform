@@ -20,16 +20,20 @@ import {ProfilePage} from "./pages/ProfilePage.tsx";
 import {AnalyticsPage} from "./pages/AnalyticsPage.tsx";
 import {OAuth2RedirectHandler} from "./pages/OAuth2RedirectHandler.tsx";
 
+/**
+ * Корневой компонент: настройка маршрутов (React Router) и общая шапка сайта
+ */
+
 const Header = () => {
-    const { user, logout } = useAuthStore();
-    const { items, fetchCart, clearCartLocal } = useCartStore();
+    const {user, logout} = useAuthStore();
+    const {items, fetchCart, clearCartLocal} = useCartStore();
     const navigate = useNavigate();
 
     useEffect(() => {
         if (user) {
             void fetchCart();
         }
-    },[user, fetchCart]);
+    }, [user, fetchCart]);
 
     const handleLogout = () => {
         logout();
@@ -48,46 +52,58 @@ const Header = () => {
                     {user ? (
                         <>
                             {user.role === 'ROLE_USER' && (
-                                <Link to="/become-seller" className="bg-indigo-600 px-4 py-2 rounded-xl hover:bg-indigo-700 transition-all text-xs font-black uppercase tracking-widest hidden md:block">
+                                <Link to="/become-seller"
+                                      className="bg-indigo-600 px-4 py-2 rounded-xl hover:bg-indigo-700 transition-all text-xs font-black uppercase tracking-widest hidden md:block">
                                     Стать мастером
                                 </Link>
                             )}
 
                             {user.role === 'ROLE_SELLER' && (
-                                <Link to="/my-products" className="bg-indigo-600 px-4 py-2 rounded-xl hover:bg-indigo-700 transition-all text-xs font-black uppercase tracking-widest hidden md:block">
+                                <Link to="/my-products"
+                                      className="bg-indigo-600 px-4 py-2 rounded-xl hover:bg-indigo-700 transition-all text-xs font-black uppercase tracking-widest hidden md:block">
                                     Мои товары
                                 </Link>
                             )}
 
                             {user.role === 'ROLE_SELLER' && (
-                                <Link to="/analytics" className="hover:text-indigo-300 text-sm font-bold uppercase tracking-widest px-2" title="Аналитика">
-                                    <TrendingUp size={22} />
+                                <Link to="/analytics"
+                                      className="hover:text-indigo-300 text-sm font-bold uppercase tracking-widest px-2"
+                                      title="Аналитика">
+                                    <TrendingUp size={22}/>
                                 </Link>
                             )}
 
                             {user.role === 'ROLE_ADMIN' && (
-                                <Link to="/admin" className="text-amber-400 hover:text-amber-300 text-xs font-black uppercase tracking-widest hidden md:block">
+                                <Link to="/admin"
+                                      className="text-amber-400 hover:text-amber-300 text-xs font-black uppercase tracking-widest hidden md:block">
                                     Админ-панель
                                 </Link>
                             )}
 
                             {/* Блок иконок */}
                             <div className="flex items-center space-x-2 border-l border-slate-700 pl-5">
-                                <NotificationBell />
+                                <NotificationBell/>
 
-                                <Link to="/chat" className="relative p-2 text-slate-300 hover:text-white transition-colors" title="Сообщения">
-                                    <MessageCircle size={22} />
+                                <Link to="/chat"
+                                      className="relative p-2 text-slate-300 hover:text-white transition-colors"
+                                      title="Сообщения">
+                                    <MessageCircle size={22}/>
                                 </Link>
 
                                 {/* Иконка заказов вместо текста */}
-                                <Link to="/orders" className="relative p-2 text-slate-300 hover:text-white transition-colors" title="Мои заказы">
-                                    <Package size={22} />
+                                <Link to="/orders"
+                                      className="relative p-2 text-slate-300 hover:text-white transition-colors"
+                                      title="Мои заказы">
+                                    <Package size={22}/>
                                 </Link>
 
-                                <Link to="/cart" className="relative p-2 text-slate-300 hover:text-white transition-colors" title="Корзина">
-                                    <ShoppingCart size={22} />
+                                <Link to="/cart"
+                                      className="relative p-2 text-slate-300 hover:text-white transition-colors"
+                                      title="Корзина">
+                                    <ShoppingCart size={22}/>
                                     {items.length > 0 && (
-                                        <span className="absolute top-0 right-0 bg-indigo-500 text-white text-[9px] font-black h-4 w-4 flex items-center justify-center rounded-full ring-2 ring-slate-900">
+                                        <span
+                                            className="absolute top-0 right-0 bg-indigo-500 text-white text-[9px] font-black h-4 w-4 flex items-center justify-center rounded-full ring-2 ring-slate-900">
                       {items.reduce((sum, item) => sum + item.quantity, 0)}
                     </span>
                                     )}
@@ -97,11 +113,15 @@ const Header = () => {
                             {/* Профиль и выход */}
                             <div className="flex items-center space-x-3 border-l border-slate-700 pl-5">
                                 {/* Ссылка на будущий профиль */}
-                                <Link to="/profile" className="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors group" title="Мой профиль">
-                                    <UserCircle size={28} className="group-hover:text-indigo-400 transition-colors" />
+                                <Link to="/profile"
+                                      className="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors group"
+                                      title="Мой профиль">
+                                    <UserCircle size={28} className="group-hover:text-indigo-400 transition-colors"/>
                                     <div className="hidden md:flex flex-col items-start">
-                                        <span className="text-[9px] text-slate-500 font-black uppercase leading-none mb-1">{user.role.replace('ROLE_', '')}</span>
-                                        <span className="text-xs text-slate-200 font-bold group-hover:text-white transition-colors">{user.fullName}</span>
+                                        <span
+                                            className="text-[9px] text-slate-500 font-black uppercase leading-none mb-1">{user.role.replace('ROLE_', '')}</span>
+                                        <span
+                                            className="text-xs text-slate-200 font-bold group-hover:text-white transition-colors">{user.fullName}</span>
                                     </div>
                                 </Link>
 
@@ -110,14 +130,16 @@ const Header = () => {
                                     title="Выйти"
                                     className="bg-slate-800 hover:bg-red-600/20 hover:text-red-400 text-slate-400 p-2 rounded-xl border border-slate-700 transition-all"
                                 >
-                                    <LogOut size={18} />
+                                    <LogOut size={18}/>
                                 </button>
                             </div>
                         </>
                     ) : (
                         <div className="flex items-center space-x-4">
-                            <Link to="/login" className="text-sm font-bold uppercase tracking-widest hover:text-indigo-400">Войти</Link>
-                            <Link to="/register" className="bg-white text-slate-900 px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-indigo-500 hover:text-white transition-all">
+                            <Link to="/login"
+                                  className="text-sm font-bold uppercase tracking-widest hover:text-indigo-400">Войти</Link>
+                            <Link to="/register"
+                                  className="bg-white text-slate-900 px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-indigo-500 hover:text-white transition-all">
                                 Регистрация
                             </Link>
                         </div>
@@ -150,7 +172,7 @@ function App() {
                         <Route path="/profile" element={<ProfilePage/>}/>
                         <Route path="/profile/:id" element={<ProfilePage/>}/>
                         <Route path="/analytics" element={<AnalyticsPage/>}/>
-                        <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
+                        <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler/>}/>
                     </Routes>
                 </main>
             </div>

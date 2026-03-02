@@ -16,6 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Управление товарами
+ */
 @Service
 @RequiredArgsConstructor
 public class ProductService {
@@ -26,6 +29,7 @@ public class ProductService {
     private final FileStorageService fileStorageService;
     private final NotificationService notificationService;
 
+    // Создание товара (статус PENDING - ждет проверки админом)
     @Transactional
     public ProductResponse createProduct(ProductRequest request, List<MultipartFile> images) {
 
@@ -62,17 +66,20 @@ public class ProductService {
         return mapToResponse(savedProduct);
     }
 
+    // Получить все апрувнутые товары
     public List<ProductResponse> getAllActiveProducts() {
         return productRepository.findAllByStatus(ProductStatus.ACTIVE).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
+    // Получить все товары на ожидании модерации (для админа)
     public List<ProductResponse> getPendingProducts() {
         return productRepository.findAllByStatus(ProductStatus.PENDING).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
+
 
     public ProductResponse mapToResponse(Product product) {
         List<ProductResponse.ImageResponse> imageResponses = product.getImages().stream()
@@ -97,6 +104,7 @@ public class ProductService {
         );
     }
 
+    // Получить мои товары (продавцу)
     public List<ProductResponse> getMyProducts() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User seller = userRepository.findByEmail(email)
@@ -107,6 +115,7 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+    // Подтвердить товар
     @Transactional
     public void approveProduct(Long productId) {
         Product product = productRepository.findById(productId)
@@ -122,6 +131,7 @@ public class ProductService {
         );
     }
 
+    // Отклонить товар
     @Transactional
     public void rejectProduct(Long productId, String reason) {
         Product product = productRepository.findById(productId)
@@ -138,12 +148,14 @@ public class ProductService {
         );
     }
 
+    // Получить товар по айди
     public ProductResponse getProductById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Товар не найден"));
         return mapToResponse(product);
     }
 
+    // Удалить товар
     @Transactional
     public void deleteProduct(Long id) {
         Product product = productRepository.findById(id)
@@ -175,6 +187,7 @@ public class ProductService {
         productRepository.delete(product);
     }
 
+    // Обновить существующий товар
     @Transactional
     public ProductResponse updateProduct(Long id, ProductRequest request, List<MultipartFile> images) {
         Product product = productRepository.findById(id)

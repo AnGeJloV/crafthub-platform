@@ -28,7 +28,7 @@ public class VerificationService {
 
     // Создает новую заявку на верификацию
     @Transactional
-    public void applyForVerification(String legalInfo, MultipartFile file){
+    public void applyForVerification(String legalInfo, MultipartFile file) {
 
         // Получаем текущего юзера
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -36,7 +36,7 @@ public class VerificationService {
                 .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
 
         // Проверка, нет ли уже активной заявки
-        if (verificationRepository.existsByUserIdAndStatus(user.getId(), VerificationStatus.PENDING)){
+        if (verificationRepository.existsByUserIdAndStatus(user.getId(), VerificationStatus.PENDING)) {
             throw new IllegalStateException("У вас уже есть заявка на рассмотрении");
         }
 

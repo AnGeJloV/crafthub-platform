@@ -18,6 +18,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Оформление и управление заказами.
+ */
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -29,8 +32,15 @@ public class OrderService {
     private final NotificationService notificationService;
     private final ReviewRepository reviewRepository;
 
-    private record OrderItemData(Product product, int quantity) {}
+    private record OrderItemData(Product product, int quantity) {
+    }
 
+    // Создание заказа:
+    // 1. Проверка остатков
+    // 2. Списание со склада
+    // 3. Создание "чека" (Order)
+    // 4. Очистка корзины
+    // 5. Уведомление продавца
     @Transactional
     public List<OrderResponse> createOrder(OrderRequest request) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();

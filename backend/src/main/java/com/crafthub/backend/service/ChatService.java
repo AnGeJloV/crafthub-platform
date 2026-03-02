@@ -13,6 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Логика чатов между покупателем и мастером
+ */
 @Service
 @RequiredArgsConstructor
 public class ChatService {

@@ -9,7 +9,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Сущность заказа. Содержит общую информацию о покупке.
+ * Сущность заказа.
+ * Это "чек" сделки: кто купил, куда везти и сколько заплачено.
  */
 @Data
 @Builder
@@ -28,22 +29,22 @@ public class Order {
     private User buyer;
 
     @Column(nullable = false)
-    private BigDecimal totalAmount;
+    private BigDecimal totalAmount; // итоговая сумма заказа
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private OrderStatus status;
+    private OrderStatus status; // текущий этап заказа
 
     @Column(name = "shipping_address", nullable = false)
     private String shippingAddress;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
-    private List<OrderItem> items;
+    private List<OrderItem> items; // список товаров
 
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "cancellation_reason")
-    private String cancellationReason;
+    private String cancellationReason; // причина отмены
 }

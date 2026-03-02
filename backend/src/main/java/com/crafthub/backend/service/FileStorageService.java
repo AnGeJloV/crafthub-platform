@@ -57,6 +57,7 @@ public class FileStorageService {
 
     /**
      * Удаляет файл с диска.
+     *
      * @param relativePath путь вида "products/2026/02/18/uuid.jpg"
      */
     public void deleteFile(String relativePath) {

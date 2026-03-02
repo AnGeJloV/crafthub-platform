@@ -19,7 +19,6 @@ import java.util.List;
  * Сущность, представляющая пользователя системы в базе данных.
  * Реализует UserDetails для интеграции со Spring Security.
  */
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -33,10 +32,10 @@ public class User implements UserDetails {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String email;
+    private String email; // используется как логин
 
     @Column(nullable = false)
-    private String password;
+    private String password; // хранится в зашифрованном виде (BCrypt)
 
     @Column(name = "full_name", nullable = false)
     private String fullName;
@@ -45,15 +44,16 @@ public class User implements UserDetails {
     private String phoneNumber;
 
     @Column(name = "avatar_url")
-    private String avatarUrl;
+    private String avatarUrl; // Путь к картинке профиля на сервере
 
     @Column(length = 1000)
-    private String bio;
+    private String bio; // Описание "о себе"
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role;
+    private Role role; // роль юзера
 
+    // Кэшированные значения рейтинга
     @Builder.Default
     @Column(name = "average_rating", columnDefinition = "DECIMAL(3,2)")
     private Double averageRating = 0.0;
@@ -64,7 +64,7 @@ public class User implements UserDetails {
 
     @Builder.Default
     @Column(name = "is_enabled")
-    private boolean enabled = true;
+    private boolean enabled = true; // заблокирован юзер или нет
 
     @CreationTimestamp
     @Column(updatable = false)

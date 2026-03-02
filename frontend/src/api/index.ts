@@ -1,5 +1,9 @@
 import axios from 'axios';
 
+/**
+ * Конфигурация Axios для запросов к API с автоматической подстановкой JWT-токена
+ */
+
 const apiClient = axios.create({
     baseURL: 'http://localhost:8080/api',
 });

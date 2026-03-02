@@ -1,5 +1,9 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import {create} from 'zustand';
+import {persist} from 'zustand/middleware';
+
+/**
+ * Хранилище данных об авторизации и токене пользователя (Zustand + Persistence)
+ */
 
 interface User {
     email: string;
@@ -19,9 +23,9 @@ export const useAuthStore = create<AuthState>()(
         (set) => ({
             user: null,
             token: null,
-            setAuth: (user, token) => set({ user, token }),
+            setAuth: (user, token) => set({user, token}),
             logout: () => {
-                set({ user: null, token: null });
+                set({user: null, token: null});
                 localStorage.removeItem('authToken');
             },
         }),

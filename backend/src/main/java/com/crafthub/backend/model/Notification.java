@@ -4,8 +4,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
 
+/**
+ * Системное уведомление.
+ * Позволяет пользователю узнать о новых заказах, сообщениях или модерации.
+ */
 @Data
 @Builder
 @NoArgsConstructor
@@ -20,17 +25,17 @@ public class Notification {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private User user; // кому предназначено уведомление
 
     @Column(nullable = false)
     private String message;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private NotificationType type;
+    private NotificationType type; // о чем уведомление (заказ, сообщение)
 
     @JsonProperty("isRead")
-    private boolean isRead = false;
+    private boolean isRead = false; // прочитано или нет
 
     @CreationTimestamp
     @Column(updatable = false)

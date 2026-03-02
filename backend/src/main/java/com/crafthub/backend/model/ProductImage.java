@@ -3,6 +3,10 @@ package com.crafthub.backend.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Сущность изображения товара.
+ * Хранит пути к загруженным файлам.
+ */
 @Data
 @Builder
 @NoArgsConstructor
@@ -16,7 +20,7 @@ public class ProductImage {
     private Long id;
 
     @Column(nullable = false)
-    private String imageUrl;
+    private String imageUrl; // относительный путь к файлу на сервере
 
     @Column(nullable = false)
     private boolean isMain; // превью

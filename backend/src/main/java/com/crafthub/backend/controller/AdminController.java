@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Контроллер для управления админ-панелью
+ */
 @RestController
 @RequestMapping("/api/admin/users")
 @RequiredArgsConstructor

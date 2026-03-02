@@ -6,7 +6,8 @@ import lombok.*;
 import java.math.BigDecimal;
 
 /**
- * Конкретный товар в составе заказа.
+ * Товар внутри конкретного заказа.
+ * Хранит "снимок" цены на момент покупки.
  */
 @Data
 @Builder
@@ -32,5 +33,5 @@ public class OrderItem {
     private Integer quantity;
 
     @Column(nullable = false)
-    private BigDecimal priceAtPurchase;
+    private BigDecimal priceAtPurchase; // цена по которой купили
 }

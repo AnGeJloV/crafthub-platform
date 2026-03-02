@@ -10,7 +10,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 /**
- * Сущность отзыва на товар.
+ * Отзыв на товар.
+ * Оставляется покупателем только после успешного завершения заказа.
  */
 @Data
 @Builder
@@ -25,10 +26,10 @@ public class Review {
     private Long id;
 
     @Column(nullable = false)
-    private Integer rating;
+    private Integer rating; // оценка 1 - 5
 
     @Column(length = 1000)
-    private String comment;
+    private String comment; // текст отзыва
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
@@ -36,15 +37,15 @@ public class Review {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
-    private User author;
+    private User author; // кто написал
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
-    private Order order;
+    private Order order; // к какому заказу относится
 
     @Builder.Default
     @Column(name = "is_reported")
-    private boolean isReported = false;
+    private boolean isReported = false; // поступила ли жалоба на отзыв
 
     @CreationTimestamp
     @Column(updatable = false)

@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Контроллер для управления отзывами
+ */
 @RestController
 @RequestMapping("/api/reviews")
 @RequiredArgsConstructor

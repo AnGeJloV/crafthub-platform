@@ -1,14 +1,18 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import {useEffect, useState} from 'react';
+import {useParams, useNavigate, Link} from 'react-router-dom';
 import apiClient from '../api';
-import { useCartStore } from '../store/cartStore';
-import { useAuthStore } from '../store/authStore';
+import {useCartStore} from '../store/cartStore';
+import {useAuthStore} from '../store/authStore';
 import {
     ShoppingCart, User, Tag, Package, PlaySquare,
     ChevronLeft, MessageSquare, Star, MessageCircle,
     Flag, Trash2
 } from 'lucide-react';
 import axios from 'axios';
+
+/**
+ * Полная карточка товара: описание, видеообзор, отзывы и кнопка связи с мастером
+ */
 
 interface ProductImage {
     imageUrl: string;
@@ -21,7 +25,7 @@ interface Review {
     comment: string;
     authorName: string;
     authorId: number;
-    authorEmail: string; // Теперь это поле есть в DTO
+    authorEmail: string;
     createdAt: string;
 }
 
@@ -42,7 +46,7 @@ interface Product {
 }
 
 export const ProductDetailsPage = () => {
-    const { id } = useParams<{ id: string }>();
+    const {id} = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [product, setProduct] = useState<Product | null>(null);
     const [reviews, setReviews] = useState<Review[]>([]);
@@ -123,7 +127,8 @@ export const ProductDetailsPage = () => {
         }
     };
 
-    if (loading) return <div className="text-center mt-20 animate-pulse text-slate-400 font-bold tracking-widest">ЗАГРУЗКА...</div>;
+    if (loading) return <div
+        className="text-center mt-20 animate-pulse text-slate-400 font-bold tracking-widest">ЗАГРУЗКА...</div>;
     if (!product) return <div className="text-center mt-20 text-red-500 font-bold">Товар не найден</div>;
 
     return (
@@ -142,7 +147,9 @@ export const ProductDetailsPage = () => {
                             src={`http://localhost:8080/uploads/${activeImage}`}
                             className="w-full h-full object-cover"
                             alt={product.name}
-                            onError={(e) => { e.currentTarget.src = 'https://placehold.co/800x800?text=Нет+фото'; }}
+                            onError={(e) => {
+                                e.currentTarget.src = 'https://placehold.co/800x800?text=Нет+фото';
+                            }}
                         />
                     </div>
 
@@ -162,7 +169,8 @@ export const ProductDetailsPage = () => {
                 <div className="flex flex-col">
                     <div className="mb-6">
                         <div className="flex items-center gap-3 mb-4">
-                            <span className="bg-indigo-50 text-indigo-600 text-xs font-black px-3 py-1.5 rounded-lg uppercase tracking-widest border border-indigo-100">
+                            <span
+                                className="bg-indigo-50 text-indigo-600 text-xs font-black px-3 py-1.5 rounded-lg uppercase tracking-widest border border-indigo-100">
                                 {product.categoryDisplayName}
                             </span>
                         </div>
@@ -210,7 +218,8 @@ export const ProductDetailsPage = () => {
                                 </button>
                             </>
                         ) : (
-                            <div className="text-center py-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 font-bold uppercase text-xs tracking-widest">
+                            <div
+                                className="text-center py-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 font-bold uppercase text-xs tracking-widest">
                                 Это ваше изделие
                             </div>
                         )}
@@ -225,16 +234,18 @@ export const ProductDetailsPage = () => {
                 </div>
             </div>
 
-            {/* ВИДЕО (ИСПРАВЛЕНО) */}
+            {/* ВИДЕО */}
             {product.youtubeVideoId && (
                 <div className="mt-20 mb-20">
                     <div className="flex items-center mb-8">
-                        <div className="w-12 h-12 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mr-4">
+                        <div
+                            className="w-12 h-12 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mr-4">
                             <PlaySquare size={28}/>
                         </div>
                         <h2 className="text-2xl font-black text-slate-800">Видеообзор изделия</h2>
                     </div>
-                    <div className="aspect-video w-full max-w-4xl mx-auto rounded-4xl overflow-hidden shadow-2xl border-8 border-white bg-slate-900">
+                    <div
+                        className="aspect-video w-full max-w-4xl mx-auto rounded-4xl overflow-hidden shadow-2xl border-8 border-white bg-slate-900">
                         <iframe
                             className="w-full h-full"
                             src={`https://www.youtube.com/embed/${product.youtubeVideoId}`}
@@ -254,10 +265,12 @@ export const ProductDetailsPage = () => {
                         <p className="text-slate-400 font-medium">Мнения людей, которые уже приобрели это изделие</p>
                     </div>
                     <div className="text-right">
-                        <div className="text-4xl font-black text-slate-900">{(product.averageRating || 0).toFixed(1)}</div>
+                        <div
+                            className="text-4xl font-black text-slate-900">{(product.averageRating || 0).toFixed(1)}</div>
                         <div className="flex justify-end my-1">
                             {[...Array(5)].map((_, i) => (
-                                <Star key={i} size={16} className={`${i < Math.round(product.averageRating) ? 'text-yellow-400 fill-yellow-400' : 'text-slate-200'}`} />
+                                <Star key={i} size={16}
+                                      className={`${i < Math.round(product.averageRating) ? 'text-yellow-400 fill-yellow-400' : 'text-slate-200'}`}/>
                             ))}
                         </div>
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{product.reviewsCount} отзывов</p>
@@ -266,13 +279,14 @@ export const ProductDetailsPage = () => {
 
                 {reviews.length === 0 ? (
                     <div className="text-center py-20 bg-slate-50 rounded-4xl border-2 border-dashed border-slate-200">
-                        <MessageCircle size={48} className="mx-auto text-slate-200 mb-4" />
+                        <MessageCircle size={48} className="mx-auto text-slate-200 mb-4"/>
                         <p className="text-slate-400 font-medium italic">На это изделие пока нет отзывов. Станьте первым!</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {reviews.map((review) => (
-                            <div key={review.id} className="bg-white p-8 rounded-4xl border border-slate-100 shadow-sm transition-hover hover:shadow-md relative group">
+                            <div key={review.id}
+                                 className="bg-white p-8 rounded-4xl border border-slate-100 shadow-sm transition-hover hover:shadow-md relative group">
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
                                         <Link to={`/profile/${review.authorId}`} className="font-bold text-slate-800 hover:text-indigo-600 transition-colors">
@@ -283,7 +297,7 @@ export const ProductDetailsPage = () => {
                                     <div className="flex items-center gap-4">
                                         <div className="flex bg-yellow-50 px-2 py-1 rounded-lg">
                                             {[...Array(5)].map((_, i) => (
-                                                <Star key={i} size={12} className={`${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-slate-200'}`} />
+                                                <Star key={i} size={12} className={`${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-slate-200'}`}/>
                                             ))}
                                         </div>
 
@@ -294,7 +308,7 @@ export const ProductDetailsPage = () => {
                                                     className="p-2 text-slate-300 hover:text-amber-500 transition-colors"
                                                     title="Пожаловаться"
                                                 >
-                                                    <Flag size={16} />
+                                                    <Flag size={16}/>
                                                 </button>
                                             )}
                                             {user?.role === 'ROLE_ADMIN' && (
@@ -303,7 +317,7 @@ export const ProductDetailsPage = () => {
                                                     className="p-2 text-slate-300 hover:text-red-500 transition-colors"
                                                     title="Удалить отзыв"
                                                 >
-                                                    <Trash2 size={16} />
+                                                    <Trash2 size={16}/>
                                                 </button>
                                             )}
                                         </div>

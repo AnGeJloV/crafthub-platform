@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Контроллер для управления уведомлениями
+ */
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor

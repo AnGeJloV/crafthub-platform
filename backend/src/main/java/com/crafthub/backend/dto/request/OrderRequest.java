@@ -2,6 +2,7 @@ package com.crafthub.backend.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+
 import java.util.List;
 
 /**
@@ -18,5 +19,6 @@ public record OrderRequest(
     public record OrderItemRequest(
             Long productId,
             Integer quantity
-    ) {}
+    ) {
+    }
 }

@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Контроллер для управления заказами
+ */
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor

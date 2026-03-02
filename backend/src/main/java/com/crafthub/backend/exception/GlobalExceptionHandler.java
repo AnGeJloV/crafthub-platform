@@ -18,6 +18,7 @@ public class GlobalExceptionHandler {
 
     /**
      * Обрабатывает ошибки валидации DTO (@Valid).
+     *
      * @param ex Исключение, которое выбрасывается при невалидных данных.
      * @return ResponseEntity с картой ошибок и статусом 400 (Bad Request).
      */

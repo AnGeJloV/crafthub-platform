@@ -13,5 +13,6 @@ public record CartResponse(
             BigDecimal price,
             Integer quantity,
             String imageUrl
-    ) {}
+    ) {
+    }
 }

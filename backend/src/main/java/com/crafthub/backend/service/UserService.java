@@ -20,6 +20,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Управление профилем пользователя.
+ */
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -55,6 +58,7 @@ public class UserService {
         );
     }
 
+    // Обновить профиль
     @Transactional
     public void updateProfile(UpdateProfileRequest request) {
         User user = getCurrentUser();
@@ -64,6 +68,7 @@ public class UserService {
         userRepository.save(user);
     }
 
+    // апдейтнуть аватарку
     @Transactional
     public String updateAvatar(MultipartFile file) {
         User user = getCurrentUser();
@@ -78,11 +83,13 @@ public class UserService {
         return path;
     }
 
+    // Получить текущего юзера
     public User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByEmail(email).orElseThrow();
     }
 
+    // Изменить пароль
     @Transactional
     public void changePassword(ChangePasswordRequest request) {
         User user = getCurrentUser();
@@ -99,6 +106,7 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    // Бан юзера
     @Transactional
     public void toggleUserStatus(Long userId) {
         User admin = getCurrentUser();
@@ -112,6 +120,7 @@ public class UserService {
         userRepository.save(user);
     }
 
+    // Изменить роль пользователя
     @Transactional
     public void updateUserRole(Long userId, Role newRole) {
         User admin = getCurrentUser();

@@ -4,6 +4,9 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * Данные для создания отзыва
+ */
 public record ReviewRequest(
         @NotNull(message = "Укажите оценку")
         @Min(value = 1, message = "Оценка не может быть меньше 1")
@@ -14,4 +17,5 @@ public record ReviewRequest(
 
         @NotNull Long productId,
         @NotNull Long orderId
-) {}
+) {
+}

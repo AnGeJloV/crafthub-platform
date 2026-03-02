@@ -1,7 +1,11 @@
-import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
+import {useEffect} from 'react';
+import {useNavigate, useSearchParams} from 'react-router-dom';
+import {useAuthStore} from '../store/authStore';
 import apiClient from '../api';
+
+/**
+ * Технический обработчик для завершения авторизации через Google и получения токена
+ */
 
 export const OAuth2RedirectHandler = () => {
     const [searchParams] = useSearchParams();
@@ -16,8 +20,8 @@ export const OAuth2RedirectHandler = () => {
 
             apiClient.get('/users/me')
                 .then(res => {
-                    const { email, fullName, role } = res.data;
-                    setAuth({ email, fullName, role }, token);
+                    const {email, fullName, role} = res.data;
+                    setAuth({email, fullName, role}, token);
                     navigate('/profile');
                 })
                 .catch(() => {

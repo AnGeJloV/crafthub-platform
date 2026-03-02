@@ -1,5 +1,9 @@
-import { create } from 'zustand';
+import {create} from 'zustand';
 import apiClient from '../api';
+
+/**
+ * Хранилище для управления состоянием корзины и синхронизации её с бэкендом
+ */
 
 interface CartItem {
     productId: number;
@@ -27,11 +31,11 @@ export const useCartStore = create<CartState>((set, get) => ({
 
     fetchCart: async () => {
         const response = await apiClient.get('/cart');
-        set({ items: response.data.items, totalAmount: response.data.totalAmount });
+        set({items: response.data.items, totalAmount: response.data.totalAmount});
     },
 
     addItem: async (productId: number) => {
-        await apiClient.post('/cart/add', { productId, quantity: 1 });
+        await apiClient.post('/cart/add', {productId, quantity: 1});
         get().fetchCart();
     },
 
@@ -47,8 +51,8 @@ export const useCartStore = create<CartState>((set, get) => ({
 
     clearCartServer: async () => {
         await apiClient.delete('/cart');
-        set({ items: [], totalAmount: 0 });
+        set({items: [], totalAmount: 0});
     },
 
-    clearCartLocal: () => set({ items: [], totalAmount: 0 }),
+    clearCartLocal: () => set({items: [], totalAmount: 0}),
 }));

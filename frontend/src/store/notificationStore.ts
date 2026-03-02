@@ -1,5 +1,9 @@
-import { create } from 'zustand';
+import {create} from 'zustand';
 import apiClient from '../api';
+
+/**
+ * Хранилище для получения и хранения списка уведомлений пользователя
+ */
 
 interface Notification {
     id: number;
@@ -29,7 +33,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
                 notifications: data,
                 unreadCount: data.filter((n: Notification) => !n.isRead).length
             });
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error(e);
+        }
     },
 
     markAsRead: async () => {
@@ -38,15 +44,19 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
             await apiClient.post('/notifications/mark-as-read');
             set(state => ({
                 unreadCount: 0,
-                notifications: state.notifications.map(n => ({ ...n, isRead: true }))
+                notifications: state.notifications.map(n => ({...n, isRead: true}))
             }));
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error(e);
+        }
     },
 
     clearAll: async () => {
         try {
             await apiClient.delete('/notifications/clear');
-            set({ notifications: [], unreadCount: 0 });
-        } catch (e) { console.error(e); }
+            set({notifications: [], unreadCount: 0});
+        } catch (e) {
+            console.error(e);
+        }
     }
 }));

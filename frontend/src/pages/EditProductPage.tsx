@@ -1,7 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, {useEffect, useState} from 'react';
+import {useNavigate, useParams} from 'react-router-dom';
 import apiClient from '../api';
-import { Camera, CheckCircle2, ArrowLeft } from 'lucide-react';
+import {Camera, CheckCircle2, ArrowLeft} from 'lucide-react';
+
+/**
+ * Форма редактирования товара с загрузкой до 5 фотографий и видео с YouTube
+ */
 
 interface Category {
     id: number;
@@ -25,7 +29,7 @@ interface ProductDetail {
 }
 
 export const EditProductPage = () => {
-    const { id } = useParams<{ id: string }>();
+    const {id} = useParams<{ id: string }>();
     const navigate = useNavigate();
 
     const [categories, setCategories] = useState<Category[]>([]);
@@ -113,7 +117,7 @@ export const EditProductPage = () => {
             mainImageIndex: mainImageIndex
         };
 
-        formData.append('product', new Blob([JSON.stringify(productData)], { type: 'application/json' }));
+        formData.append('product', new Blob([JSON.stringify(productData)], {type: 'application/json'}));
 
         if (selectedFiles.length > 0) {
             selectedFiles.forEach(file => formData.append('images', file));
@@ -140,8 +144,9 @@ export const EditProductPage = () => {
 
     return (
         <div className="container mx-auto mt-10 px-4 max-w-5xl pb-20">
-            <button onClick={() => navigate('/my-products')} className="flex items-center text-slate-400 hover:text-indigo-600 mb-6 transition-colors font-bold text-sm uppercase">
-                <ArrowLeft size={16} className="mr-2" /> Назад
+            <button onClick={() => navigate('/my-products')}
+                    className="flex items-center text-slate-400 hover:text-indigo-600 mb-6 transition-colors font-bold text-sm uppercase">
+                <ArrowLeft size={16} className="mr-2"/> Назад
             </button>
 
             <h1 className="text-3xl font-black mb-8 text-slate-900">Редактирование</h1>
@@ -150,23 +155,33 @@ export const EditProductPage = () => {
                 <div className="lg:col-span-3 space-y-6">
                     <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-5">
                         <div>
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Название</label>
-                            <input value={form.name} className="w-full border-2 border-slate-50 bg-slate-50/50 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold" required onChange={e => setForm({...form, name: e.target.value})} />
+                            <label
+                                className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Название</label>
+                            <input value={form.name}
+                                   className="w-full border-2 border-slate-50 bg-slate-50/50 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold"
+                                   required onChange={e => setForm({...form, name: e.target.value})}/>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Цена (BYN)</label>
-                                <input type="number" step="0.01" value={form.price} className="w-full border-2 border-slate-50 bg-slate-50/50 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold" required onChange={e => setForm({...form, price: e.target.value})} />
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Цена
+                                    (BYN)</label>
+                                <input type="number" step="0.01" value={form.price}
+                                       className="w-full border-2 border-slate-50 bg-slate-50/50 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold"
+                                       required onChange={e => setForm({...form, price: e.target.value})}/>
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Количество</label>
-                                <input type="number" value={form.stockQuantity} className="w-full border-2 border-slate-50 bg-slate-50/50 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold" required onChange={e => setForm({...form, stockQuantity: e.target.value})} />
+                                <label
+                                    className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Количество</label>
+                                <input type="number" value={form.stockQuantity}
+                                       className="w-full border-2 border-slate-50 bg-slate-50/50 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold"
+                                       required onChange={e => setForm({...form, stockQuantity: e.target.value})}/>
                             </div>
                         </div>
 
                         <div>
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Категория</label>
+                            <label
+                                className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Категория</label>
                             <select
                                 value={form.categoryId} // ТЕПЕРЬ ТУТ ЯВНОЕ ИСПОЛЬЗОВАНИЕ
                                 className="w-full border-2 border-slate-50 bg-slate-50/50 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold"
@@ -183,13 +198,20 @@ export const EditProductPage = () => {
                         </div>
 
                         <div>
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">YouTube URL</label>
-                            <input value={form.youtubeUrl} className="w-full border-2 border-slate-50 bg-slate-50/50 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all font-medium" onChange={e => setForm({...form, youtubeUrl: e.target.value})} />
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">YouTube
+                                URL</label>
+                            <input value={form.youtubeUrl}
+                                   className="w-full border-2 border-slate-50 bg-slate-50/50 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all font-medium"
+                                   onChange={e => setForm({...form, youtubeUrl: e.target.value})}/>
                         </div>
 
                         <div>
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Описание</label>
-                            <textarea value={form.description} className="w-full border-2 border-slate-50 bg-slate-50/50 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all font-medium" rows={6} onChange={e => setForm({...form, description: e.target.value})}></textarea>
+                            <label
+                                className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Описание</label>
+                            <textarea value={form.description}
+                                      className="w-full border-2 border-slate-50 bg-slate-50/50 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all font-medium"
+                                      rows={6}
+                                      onChange={e => setForm({...form, description: e.target.value})}></textarea>
                         </div>
                     </div>
                 </div>
@@ -199,18 +221,25 @@ export const EditProductPage = () => {
                         <h3 className="text-sm font-black text-slate-800 uppercase mb-4">Фотографии</h3>
                         <div className="grid grid-cols-2 gap-4 mb-6">
                             {previews.map((url, index) => (
-                                <div key={index} className={`relative aspect-square rounded-2xl overflow-hidden border-4 transition-all ${mainImageIndex === index ? 'border-indigo-500' : 'border-slate-50'}`} onClick={() => setMainImageIndex(index)}>
-                                    <img src={url} className="w-full h-full object-cover" alt="" />
-                                    {mainImageIndex === index && <div className="absolute top-2 left-2 p-1 bg-indigo-500 text-white rounded-full"><CheckCircle2 size={16} /></div>}
+                                <div key={index}
+                                     className={`relative aspect-square rounded-2xl overflow-hidden border-4 transition-all ${mainImageIndex === index ? 'border-indigo-500' : 'border-slate-50'}`}
+                                     onClick={() => setMainImageIndex(index)}>
+                                    <img src={url} className="w-full h-full object-cover" alt=""/>
+                                    {mainImageIndex === index && <div
+                                        className="absolute top-2 left-2 p-1 bg-indigo-500 text-white rounded-full">
+                                        <CheckCircle2 size={16}/></div>}
                                 </div>
                             ))}
-                            <label className="aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-all">
-                                <input type="file" multiple className="hidden" onChange={handleFileChange} accept="image/*" />
-                                <Camera size={24} className="text-slate-400" />
+                            <label
+                                className="aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-all">
+                                <input type="file" multiple className="hidden" onChange={handleFileChange}
+                                       accept="image/*"/>
+                                <Camera size={24} className="text-slate-400"/>
                                 <span className="text-[10px] font-bold mt-2 text-slate-400 uppercase">Заменить</span>
                             </label>
                         </div>
-                        <button type="submit" disabled={saving} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg shadow-xl hover:bg-indigo-600 transition-all disabled:bg-slate-200">
+                        <button type="submit" disabled={saving}
+                                className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg shadow-xl hover:bg-indigo-600 transition-all disabled:bg-slate-200">
                             {saving ? 'СОХРАНЕНИЕ...' : 'СОХРАНИТЬ'}
                         </button>
                     </div>

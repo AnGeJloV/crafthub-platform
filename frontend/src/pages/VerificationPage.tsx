@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import apiClient from '../api';
-import { useNavigate } from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 import axios from "axios";
+
+/**
+ * Форма подачи заявки на получение статуса продавца (загрузка документов)
+ */
 
 export const VerificationPage = () => {
     const [legalInfo, setLegalInfo] = useState('');
@@ -81,7 +85,8 @@ export const VerificationPage = () => {
                 </div>
 
                 {message && (
-                    <div className={`p-3 rounded ${message.includes('успешно') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    <div
+                        className={`p-3 rounded ${message.includes('успешно') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                         {message}
                     </div>
                 )}

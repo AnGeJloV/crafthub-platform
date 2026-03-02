@@ -14,13 +14,13 @@ import java.util.List;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
+    // Все товары конкретного мастера
     List<Product> findAllBySellerId(Long sellerId);
 
+    // Фильтр товаров по статусу
     List<Product> findAllByStatus(ProductStatus status);
 
-    /**
-     * Запрос для получения самых продаваемых товаров конкретного мастера.
-     */
+    // Запрос для получения самых продаваемых товаров конкретного мастера.
     @Query("SELECT new com.crafthub.backend.dto.stats.TopProductStats(i.product.name, SUM(i.quantity)) " +
             "FROM OrderItem i " +
             "WHERE i.product.seller.id = :sellerId AND i.order.status = 'COMPLETED' " +

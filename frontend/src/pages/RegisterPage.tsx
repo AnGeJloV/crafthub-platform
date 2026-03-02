@@ -1,8 +1,12 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import {useState} from 'react';
+import {useNavigate} from 'react-router-dom';
 import apiClient from '../api';
-import { InputField } from '../components/InputField';
+import {InputField} from '../components/InputField';
 import axios from "axios";
+
+/**
+ * Страница регистрации нового пользователя с валидацией полей
+ */
 
 export const RegisterPage = () => {
 
@@ -73,10 +77,14 @@ export const RegisterPage = () => {
         <div className="max-w-md mx-auto mt-10">
             <h2 className="text-2xl font-bold mb-5 text-center">Создать аккаунт</h2>
             <form onSubmit={handleSubmit} noValidate className="space-y-6">
-                <InputField label="Полное имя" id="fullName" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
-                <InputField label="Email" id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                <InputField label="Номер телефона" id="phoneNumber" type="text" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required />
-                <InputField label="Пароль" id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <InputField label="Полное имя" id="fullName" type="text" value={fullName}
+                            onChange={(e) => setFullName(e.target.value)} required/>
+                <InputField label="Email" id="email" type="email" value={email}
+                            onChange={(e) => setEmail(e.target.value)} required/>
+                <InputField label="Номер телефона" id="phoneNumber" type="text" value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)} required/>
+                <InputField label="Пароль" id="password" type="password" value={password}
+                            onChange={(e) => setPassword(e.target.value)} required/>
 
                 {/* Отображение ошибки, если она есть */}
                 {error && <p className="text-red-500 text-sm">{error}</p>}

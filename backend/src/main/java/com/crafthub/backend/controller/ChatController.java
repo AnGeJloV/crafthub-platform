@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Контроллер для управления чатами
+ */
 @RestController
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor

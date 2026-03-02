@@ -1,5 +1,9 @@
 import React from 'react';
 
+/**
+ * Универсальный компонент текстового поля ввода для форм
+ */
+
 type InputFieldProps = {
     label: string;
     id: string;
@@ -9,7 +13,7 @@ type InputFieldProps = {
     required?: boolean;
 };
 
-export const InputField: React.FC<InputFieldProps> = ({ label, id, type, value, onChange, required = false }) => {
+export const InputField: React.FC<InputFieldProps> = ({label, id, type, value, onChange, required = false}) => {
     return (
         <div>
             <label htmlFor={id} className="block text-sm font-medium text-gray-700">

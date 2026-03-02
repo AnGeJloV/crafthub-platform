@@ -13,6 +13,9 @@ import org.springframework.http.MediaType;
 
 import java.util.List;
 
+/**
+ * Контроллер для управления товарами
+ */
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
@@ -20,7 +23,7 @@ public class ProductController {
 
     private final ProductService productService;
 
-    @PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<ProductResponse> createProduct(
             @RequestPart("product") @Valid ProductRequest request,

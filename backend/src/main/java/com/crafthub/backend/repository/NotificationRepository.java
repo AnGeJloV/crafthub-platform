@@ -10,9 +10,14 @@ import java.util.List;
 
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
+
+    // Список всех уведомлений юзера (от новых к старым)
     List<Notification> findAllByUserIdOrderByCreatedAtDesc(Long userId);
+
+    // Только непрочитанные уведомления (для счетчика на иконке колокольчика)
     List<Notification> findAllByUserIdAndIsReadFalse(Long userId);
 
+    // Удалить все уведомления юзера (функция "Очистить всё")
     @Modifying
     @Transactional
     void deleteAllByUserId(Long userId);

@@ -11,9 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Repository
 public interface CartItemRepository extends JpaRepository<CartItem, Long> {
+
+    // Очистить всю корзину после оформления заказа
     @Modifying
     @Transactional
     void deleteAllByCartId(Long cartId);
+
+    // Удалить конкретный товар из корзины юзера
     @Modifying
     @Transactional
     void deleteAllByCartIdAndProductId(Long id, Long productId);

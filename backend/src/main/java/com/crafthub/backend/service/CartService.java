@@ -14,6 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Логика корзины (хранится в базе данных).
+ */
 @Service
 @RequiredArgsConstructor
 public class CartService {
@@ -37,6 +40,7 @@ public class CartService {
                 .orElseGet(() -> cartRepository.save(Cart.builder().user(user).items(new ArrayList<>()).build()));
     }
 
+    // Добавление товара в корзину
     @Transactional
     public void addToCart(AddToCartRequest request) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -76,6 +80,7 @@ public class CartService {
         }
     }
 
+    // Пересчет итоговой суммы для фронта
     @Transactional
     public CartResponse getCartResponse() {
         Cart cart = getOrCreateCart();
@@ -112,6 +117,7 @@ public class CartService {
         cartItemRepository.deleteAllByCartId(cart.getId());
     }
 
+    // Обновить количество товара в корзине
     @Transactional
     public void updateQuantity(Long productId, Integer quantity) {
         Cart cart = getOrCreateCart();

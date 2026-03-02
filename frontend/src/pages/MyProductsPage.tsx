@@ -3,6 +3,10 @@ import {Link} from 'react-router-dom';
 import apiClient from '../api';
 import {Clock, CheckCircle, XCircle} from 'lucide-react';
 
+/**
+ * Личный кабинет мастера для управления своими товарами и их статусами модерации
+ */
+
 interface ProductImage {
     imageUrl: string;
     isMain: boolean;

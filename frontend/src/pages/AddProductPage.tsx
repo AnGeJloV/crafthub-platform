@@ -1,7 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
 import apiClient from '../api';
-import { Youtube, Camera, CheckCircle2, X } from 'lucide-react';
+import {Youtube, Camera, CheckCircle2, X} from 'lucide-react';
+
+/**
+ * Форма создания товара с загрузкой до 5 фотографий и видео с YouTube
+ */
 
 interface Category {
     id: number;
@@ -90,7 +94,7 @@ export const AddProductPage = () => {
             mainImageIndex: mainImageIndex
         };
 
-        const blob = new Blob([JSON.stringify(productData)], { type: 'application/json' });
+        const blob = new Blob([JSON.stringify(productData)], {type: 'application/json'});
         formData.append('product', blob);
 
         selectedFiles.forEach(file => {
@@ -99,7 +103,7 @@ export const AddProductPage = () => {
 
         try {
             await apiClient.post('/products', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: {'Content-Type': 'multipart/form-data'}
             });
             alert('Товар успешно создан и отправлен на модерацию!');
             navigate('/my-products');
@@ -121,7 +125,8 @@ export const AddProductPage = () => {
                 <div className="lg:col-span-3 space-y-6">
                     <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 space-y-5">
                         <div>
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Название товара</label>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Название
+                                товара</label>
                             <input
                                 className="w-full border-2 border-slate-50 bg-slate-50/50 p-4 rounded-2xl focus:bg-white focus:border-indigo-500 outline-none transition-all font-bold"
                                 required
@@ -132,7 +137,8 @@ export const AddProductPage = () => {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Цена (BYN)</label>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Цена
+                                    (BYN)</label>
                                 <input
                                     type="number" step="0.01"
                                     className="w-full border-2 border-slate-50 bg-slate-50/50 p-4 rounded-2xl focus:bg-white focus:border-indigo-500 outline-none transition-all font-bold"
@@ -141,7 +147,8 @@ export const AddProductPage = () => {
                                 />
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Количество</label>
+                                <label
+                                    className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Количество</label>
                                 <input
                                     type="number"
                                     className="w-full border-2 border-slate-50 bg-slate-50/50 p-4 rounded-2xl focus:bg-white focus:border-indigo-500 outline-none transition-all font-bold"
@@ -152,7 +159,8 @@ export const AddProductPage = () => {
                         </div>
 
                         <div>
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Категория</label>
+                            <label
+                                className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Категория</label>
                             <select
                                 className="w-full border-2 border-slate-50 bg-slate-50/50 p-4 rounded-2xl focus:bg-white focus:border-indigo-500 outline-none transition-all font-bold appearance-none"
                                 required
@@ -164,8 +172,9 @@ export const AddProductPage = () => {
                         </div>
 
                         <div>
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center">
-                                <Youtube size={14} className="mr-1 text-red-500" /> Ссылка на видео YouTube
+                            <label
+                                className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center">
+                                <Youtube size={14} className="mr-1 text-red-500"/> Ссылка на видео YouTube
                             </label>
                             <input
                                 className="w-full border-2 border-slate-50 bg-slate-50/50 p-4 rounded-2xl focus:bg-white focus:border-indigo-500 outline-none transition-all font-medium"
@@ -175,7 +184,8 @@ export const AddProductPage = () => {
                         </div>
 
                         <div>
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Описание</label>
+                            <label
+                                className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Описание</label>
                             <textarea
                                 className="w-full border-2 border-slate-50 bg-slate-50/50 p-4 rounded-2xl focus:bg-white focus:border-indigo-500 outline-none transition-all font-medium"
                                 rows={4}
@@ -189,7 +199,8 @@ export const AddProductPage = () => {
                 {/* Загрузка фото - 2 колонки */}
                 <div className="lg:col-span-2 space-y-6">
                     <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
-                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-4">Фотографии товара</h3>
+                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-4">Фотографии
+                            товара</h3>
 
                         <div className="grid grid-cols-2 gap-4 mb-6">
                             {previews.map((url, index) => (
@@ -197,7 +208,7 @@ export const AddProductPage = () => {
                                     key={index}
                                     className={`relative aspect-square rounded-2xl overflow-hidden border-4 transition-all group ${mainImageIndex === index ? 'border-indigo-500' : 'border-slate-50'}`}
                                 >
-                                    <img src={url} className="w-full h-full object-cover" alt="" />
+                                    <img src={url} className="w-full h-full object-cover" alt=""/>
 
                                     {/* Кнопка выбора главного фото */}
                                     <button
@@ -205,7 +216,7 @@ export const AddProductPage = () => {
                                         onClick={() => setMainImageIndex(index)}
                                         className={`absolute top-2 left-2 p-1 rounded-full transition-all ${mainImageIndex === index ? 'bg-indigo-500 text-white' : 'bg-white/80 text-slate-400 hover:text-indigo-500'}`}
                                     >
-                                        <CheckCircle2 size={18} />
+                                        <CheckCircle2 size={18}/>
                                     </button>
 
                                     {/* Кнопка удаления */}
@@ -214,11 +225,12 @@ export const AddProductPage = () => {
                                         onClick={() => removeImage(index)}
                                         className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                                     >
-                                        <X size={16} />
+                                        <X size={16}/>
                                     </button>
 
                                     {mainImageIndex === index && (
-                                        <div className="absolute bottom-0 left-0 right-0 bg-indigo-500 text-white text-[8px] font-black text-center py-1 uppercase tracking-widest">
+                                        <div
+                                            className="absolute bottom-0 left-0 right-0 bg-indigo-500 text-white text-[8px] font-black text-center py-1 uppercase tracking-widest">
                                             Главное фото
                                         </div>
                                     )}
@@ -227,9 +239,11 @@ export const AddProductPage = () => {
 
                             {/* Кнопка добавить еще */}
                             {selectedFiles.length < 5 && (
-                                <label className="aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 hover:border-indigo-300 transition-all text-slate-400 hover:text-indigo-500">
-                                    <input type="file" multiple className="hidden" onChange={handleFileChange} accept="image/*" />
-                                    <Camera size={24} />
+                                <label
+                                    className="aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 hover:border-indigo-300 transition-all text-slate-400 hover:text-indigo-500">
+                                    <input type="file" multiple className="hidden" onChange={handleFileChange}
+                                           accept="image/*"/>
+                                    <Camera size={24}/>
                                     <span className="text-[10px] font-bold mt-2 uppercase">Добавить</span>
                                 </label>
                             )}

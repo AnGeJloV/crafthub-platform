@@ -12,12 +12,15 @@ import java.util.List;
 @Repository
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
 
+    // История сообщений конкретного диалога
     List<ChatMessage> findAllByDialogueIdOrderByCreatedAtAsc(Long dialogueId);
 
+    // Массовая пометка сообщений как "прочитано" (когда юзер открывает чат)
     @Modifying
     @Query("UPDATE ChatMessage m SET m.isRead = true WHERE m.dialogue.id = :dialogueId AND m.sender.id != :currentUserId AND m.isRead = false")
     void markAllAsReadInDialogue(@Param("dialogueId") Long dialogueId, @Param("currentUserId") Long currentUserId);
 
+    // Количество непрочитанных сообщений в конкретном диалоге
     @Query("SELECT COUNT(m) FROM ChatMessage m WHERE m.dialogue.id = :dialogueId AND m.sender.id != :currentUserId AND m.isRead = false")
     long countUnreadMessagesInDialogue(@Param("dialogueId") Long dialogueId, @Param("currentUserId") Long currentUserId);
 }
