@@ -17,10 +17,11 @@ import {
     ExternalLink,
     TrendingUp,
     DollarSign,
-    AlertTriangle, FileText
+    AlertTriangle, FileText, X
 } from 'lucide-react';
 import {Link} from 'react-router-dom';
 import {useAuthStore} from "../store/authStore.ts";
+import toast from 'react-hot-toast';
 
 /**
  * Панель управления для администратора: модерация, верификация и жалобы на отзывы
@@ -97,6 +98,25 @@ export const AdminPage = () => {
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [scale, setScale] = useState(1);
 
+    const [decisionModal, setDecisionModal] = useState<{
+        isOpen: boolean;
+        type: 'product' | 'seller' | 'review' | 'user';
+        action: 'approve' | 'reject' | 'delete' | 'toggle';
+        id: number | null;
+        title: string;
+        confirmText: string;
+        showInput: boolean;
+    }>({
+        isOpen: false,
+        type: 'product',
+        action: 'approve',
+        id: null,
+        title: '',
+        confirmText: '',
+        showInput: false
+    });
+    const [reason, setReason] = useState('');
+
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
@@ -110,10 +130,11 @@ export const AdminPage = () => {
             setSellerRequests(sellers.data);
             setProductRequests(products.data);
             setUsers(allUsers.data);
-            setReportedReviews(reports.data); // ФИКС: теперь жалобы отображаются
+            setReportedReviews(reports.data);
             setAdminStats(stats.data);
         } catch (err) {
             console.error('Ошибка загрузки данных админа:', err);
+            toast.error('Не удалось загрузить данные');
         } finally {
             setLoading(false);
         }
@@ -122,6 +143,52 @@ export const AdminPage = () => {
     useEffect(() => {
         void fetchData();
     }, [fetchData]);
+
+    const handleConfirmDecision = async () => {
+        const {id, type, action, showInput} = decisionModal;
+        if (!id) return;
+        if (showInput && !reason.trim()) {
+            toast.error('Укажите причину');
+            return;
+        }
+
+        try {
+            if (type === 'seller') {
+                await apiClient.post(`/verification/${id}/${action}`, action === 'reject' ? {reason} : {});
+                setSellerRequests(prev => prev.filter(r => r.id !== id));
+                toast.success(action === 'approve' ? 'Мастер одобрен' : 'Заявка отклонена');
+            } else if (type === 'product') {
+                await apiClient.post(`/products/${id}/${action}`, reason, {
+                    headers: {'Content-Type': 'text/plain'}
+                });
+                setProductRequests(prev => prev.filter(r => r.id !== id));
+                toast.success(action === 'approve' ? 'Товар опубликован' : 'Товар отклонен');
+            } else if (type === 'review') {
+                await apiClient.delete(`/reviews/admin/${id}`);
+                setReportedReviews(prev => prev.filter(r => r.id !== id));
+                toast.success('Отзыв удален');
+            } else if (type === 'user') {
+                await apiClient.patch(`/admin/users/${id}/status`);
+                setUsers(prev => prev.map(u => u.id === id ? {...u, enabled: !u.enabled} : u));
+                toast.success('Статус пользователя изменен');
+            }
+
+            closeModal();
+            void fetchData();
+        } catch (error) {
+            console.error('Ошибка выполнения действия:', error);
+            toast.error('Произошла ошибка');
+        }
+    };
+
+    const openModal = (config: typeof decisionModal) => {
+        setDecisionModal({...config, isOpen: true});
+        setReason('');
+    };
+
+    const closeModal = () => {
+        setDecisionModal(prev => ({...prev, isOpen: false}));
+    };
 
     const downloadAdminReport = async () => {
         try {
@@ -135,56 +202,38 @@ export const AdminPage = () => {
             document.body.appendChild(link);
             link.click();
             link.remove();
+            toast.success('Отчет загружен');
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
-            alert('Ошибка при генерации PDF отчета');
+            toast.error('Ошибка при генерации PDF');
         }
     };
 
-    const handleSellerDecision = async (id: number, status: 'approve' | 'reject') => {
-        const reason = status === 'reject' ? prompt('Причина отказа:') : null;
-        if (status === 'reject' && !reason) return;
-
-        try {
-            await apiClient.post(`/verification/${id}/${status}`, status === 'reject' ? {reason} : {});
-            setSellerRequests(prev => prev.filter(r => r.id !== id));
-            void fetchData();
-        } catch (error) {
-            console.error('Ошибка при решении по продавцу:', error);
+    const handleToggleStatus = (id: number, currentEnabled: boolean) => {
+        const isMe = users.find(u => u.id === id)?.email === currentUser?.email;
+        if (isMe) {
+            toast.error('Нельзя заблокировать самого себя');
+            return;
         }
-    };
-
-    const handleProductDecision = async (id: number, status: 'approve' | 'reject') => {
-        const reason = status === 'reject' ? prompt('Причина отказа:') : null;
-        if (status === 'reject' && !reason) return;
-
-        try {
-            await apiClient.post(`/products/${id}/${status}`, reason, {
-                headers: {'Content-Type': 'text/plain'}
-            });
-            setProductRequests(prev => prev.filter(r => r.id !== id));
-            void fetchData();
-        } catch (error) {
-            console.error('Ошибка при модерации товара:', error);
-        }
-    };
-
-    const handleToggleStatus = async (id: number) => {
-        try {
-            await apiClient.patch(`/admin/users/${id}/status`);
-            setUsers(prev => prev.map(u => u.id === id ? {...u, enabled: !u.enabled} : u));
-        } catch (error) {
-            console.error('Ошибка блокировки:', error);
-            alert('Ошибка. Нельзя заблокировать самого себя.');
-        }
+        openModal({
+            isOpen: true,
+            type: 'user',
+            action: 'toggle',
+            id,
+            title: currentEnabled ? 'Заблокировать пользователя?' : 'Разблокировать пользователя?',
+            confirmText: currentEnabled ? 'Заблокировать' : 'Разблокировать',
+            showInput: false
+        });
     };
 
     const handleRoleChange = async (id: number, newRole: string) => {
         try {
             await apiClient.patch(`/admin/users/${id}/role?role=${newRole}`);
             setUsers(prev => prev.map(u => u.id === id ? {...u, role: newRole} : u));
+            toast.success('Роль обновлена');
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
-            console.error('Ошибка смены роли:', error);
+            toast.error('Ошибка при смене роли');
         }
     };
 
@@ -198,24 +247,18 @@ export const AdminPage = () => {
         try {
             await apiClient.patch(`/reviews/admin/${id}/ignore`);
             setReportedReviews(prev => prev.filter(r => r.id !== id));
+            toast.success('Жалоба отклонена');
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
-            console.error('Ошибка отклонения жалобы:', error);
+            toast.error('Ошибка');
         }
     };
 
-    const handleDeleteReview = async (id: number) => {
-        if (!window.confirm('Удалить этот отзыв навсегда?')) return;
-        try {
-            await apiClient.delete(`/reviews/admin/${id}`);
-            setReportedReviews(prev => prev.filter(r => r.id !== id));
-        } catch (error) {
-            console.error('Ошибка удаления отзыва:', error);
-        }
-    };
-
-    if (loading) return <div
-        className="text-center mt-20 text-slate-400 animate-pulse font-bold uppercase tracking-widest">Загрузка
-        панели...</div>;
+    if (loading) return (
+        <div className="text-center mt-20 text-slate-400 animate-pulse font-bold uppercase tracking-widest">
+            Загрузка панели...
+        </div>
+    );
 
     return (
         <div className="container mx-auto mt-8 px-4 pb-20">
@@ -270,11 +313,33 @@ export const AdminPage = () => {
                                         className="bg-slate-50 p-5 rounded-3xl border border-slate-100 italic text-sm text-slate-600 leading-relaxed">"{req.legalInfo}"
                                     </div>
                                     <div className="flex space-x-3 mt-8">
-                                        <button onClick={() => void handleSellerDecision(req.id, 'approve')}
-                                                className="flex-1 bg-green-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-700 transition-all shadow-lg">Одобрить
+                                        <button
+                                            onClick={() => openModal({
+                                                isOpen: true,
+                                                type: 'seller',
+                                                action: 'approve',
+                                                id: req.id,
+                                                title: 'Одобрить заявку мастера?',
+                                                confirmText: 'Одобрить',
+                                                showInput: false
+                                            })}
+                                            className="flex-1 bg-green-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-700 transition-all shadow-lg"
+                                        >
+                                            Одобрить
                                         </button>
-                                        <button onClick={() => void handleSellerDecision(req.id, 'reject')}
-                                                className="flex-1 bg-white border-2 border-red-50 text-red-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-50 transition-all">Отклонить
+                                        <button
+                                            onClick={() => openModal({
+                                                isOpen: true,
+                                                type: 'seller',
+                                                action: 'reject',
+                                                id: req.id,
+                                                title: 'Причина отказа:',
+                                                confirmText: 'Отклонить',
+                                                showInput: true
+                                            })}
+                                            className="flex-1 bg-white border-2 border-red-50 text-red-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-50 transition-all"
+                                        >
+                                            Отклонить
                                         </button>
                                     </div>
                                 </div>
@@ -328,11 +393,33 @@ export const AdminPage = () => {
                                         </div>
                                     </div>
                                     <div className="flex space-x-4 mt-10">
-                                        <button onClick={() => void handleProductDecision(prod.id, 'approve')}
-                                                className="flex-1 bg-green-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-700 transition-all shadow-lg">ОДОБРИТЬ
+                                        <button
+                                            onClick={() => openModal({
+                                                isOpen: true,
+                                                type: 'product',
+                                                action: 'approve',
+                                                id: prod.id,
+                                                title: 'Опубликовать товар?',
+                                                confirmText: 'Опубликовать',
+                                                showInput: false
+                                            })}
+                                            className="flex-1 bg-green-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-700 transition-all shadow-lg"
+                                        >
+                                            ОДОБРИТЬ
                                         </button>
-                                        <button onClick={() => void handleProductDecision(prod.id, 'reject')}
-                                                className="flex-1 bg-red-50 text-red-600 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-100 transition-all border-2 border-red-100">ОТКЛОНИТЬ
+                                        <button
+                                            onClick={() => openModal({
+                                                isOpen: true,
+                                                type: 'product',
+                                                action: 'reject',
+                                                id: prod.id,
+                                                title: 'Причина отклонения товара:',
+                                                confirmText: 'Отклонить',
+                                                showInput: true
+                                            })}
+                                            className="flex-1 bg-red-50 text-red-600 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-100 transition-all border-2 border-red-100"
+                                        >
+                                            ОТКЛОНИТЬ
                                         </button>
                                     </div>
                                 </div>
@@ -402,8 +489,11 @@ export const AdminPage = () => {
                                             </select>
                                         </td>
                                         <td className="p-8 text-right">
-                                            <button disabled={isMe} onClick={() => void handleToggleStatus(u.id)}
-                                                    className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${isMe ? 'bg-slate-50 text-slate-200 cursor-not-allowed' : u.enabled ? 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white' : 'bg-green-50 text-green-600 hover:bg-green-600 hover:text-white'}`}>
+                                            <button
+                                                disabled={isMe}
+                                                onClick={() => handleToggleStatus(u.id, u.enabled)}
+                                                className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${isMe ? 'bg-slate-50 text-slate-200 cursor-not-allowed' : u.enabled ? 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white' : 'bg-green-50 text-green-600 hover:bg-green-600 hover:text-white'}`}
+                                            >
                                                 {isMe ? 'Это вы' : (u.enabled ? 'Забанить' : 'Разбанить')}
                                             </button>
                                         </td>
@@ -457,8 +547,18 @@ export const AdminPage = () => {
                                             className="px-6 py-3 bg-slate-100 text-slate-500 rounded-2xl font-black text-xs uppercase hover:bg-slate-200 transition-all">Отклонить
                                         жалобу
                                     </button>
-                                    <button onClick={() => void handleDeleteReview(review.id)}
-                                            className="px-6 py-3 bg-red-500 text-white rounded-2xl font-black text-xs uppercase hover:bg-red-600 transition-all shadow-lg flex items-center">
+                                    <button
+                                        onClick={() => openModal({
+                                            isOpen: true,
+                                            type: 'review',
+                                            action: 'delete',
+                                            id: review.id,
+                                            title: 'Удалить этот отзыв навсегда?',
+                                            confirmText: 'Удалить',
+                                            showInput: false
+                                        })}
+                                        className="px-6 py-3 bg-red-500 text-white rounded-2xl font-black text-xs uppercase hover:bg-red-600 transition-all shadow-lg flex items-center"
+                                    >
                                         <Trash2 size={16} className="mr-2"/> Удалить отзыв
                                     </button>
                                 </div>
@@ -467,7 +567,7 @@ export const AdminPage = () => {
                 </div>
             )}
 
-            {/* Контент: Аналитика (НОВОЕ) */}
+            {/* Контент: Аналитика */}
             {activeTab === 'stats' && adminStats && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in duration-500">
                     <div
@@ -497,7 +597,7 @@ export const AdminPage = () => {
                 </div>
             )}
 
-            {/* Модалка зума */}
+            {/* Модалка зума картинок */}
             {selectedImage && (
                 <div
                     className="fixed inset-0 z-100 flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 overflow-hidden"
@@ -511,6 +611,54 @@ export const AdminPage = () => {
                          style={{transform: `scale(${scale})`}} onClick={(ev) => ev.stopPropagation()}>
                         <SecureImage src={selectedImage}
                                      className="max-w-[90vw] max-h-[90vh] object-contain shadow-2xl rounded-4xl pointer-events-none"/>
+                    </div>
+                </div>
+            )}
+
+            {decisionModal.isOpen && (
+                <div
+                    className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div
+                        className="bg-white rounded-[2.5rem] p-10 max-w-md w-full shadow-2xl relative animate-in zoom-in duration-300">
+                        <button onClick={closeModal}
+                                className="absolute top-6 right-6 text-slate-300 hover:text-slate-900 transition-colors">
+                            <X size={24}/>
+                        </button>
+
+                        <h3 className="text-2xl font-black text-slate-800 mb-2">{decisionModal.title}</h3>
+                        <p className="text-slate-400 text-sm mb-8 font-medium leading-relaxed">
+                            Подтвердите ваше действие. Отменить его позже будет невозможно.
+                        </p>
+
+                        {decisionModal.showInput && (
+                            <textarea
+                                autoFocus
+                                className="w-full border-2 border-slate-50 bg-slate-50 p-5 rounded-3xl outline-none focus:bg-white focus:border-indigo-500 transition-all text-sm mb-8 resize-none font-medium"
+                                rows={4}
+                                placeholder="Напишите причину здесь..."
+                                value={reason}
+                                onChange={(e) => setReason(e.target.value)}
+                            />
+                        )}
+
+                        <div className="flex gap-4">
+                            <button
+                                onClick={handleConfirmDecision}
+                                className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 ${
+                                    decisionModal.action === 'reject' || decisionModal.action === 'delete' || (decisionModal.action === 'toggle' && decisionModal.confirmText === 'Заблокировать')
+                                        ? 'bg-red-500 text-white hover:bg-red-600'
+                                        : 'bg-green-600 text-white hover:bg-green-700'
+                                }`}
+                            >
+                                {decisionModal.confirmText}
+                            </button>
+                            <button
+                                onClick={closeModal}
+                                className="flex-1 bg-slate-100 text-slate-400 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all"
+                            >
+                                Отмена
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

@@ -19,6 +19,7 @@ import {LogOut, MessageCircle, Package, ShoppingCart, TrendingUp, UserCircle} fr
 import {ProfilePage} from "./pages/ProfilePage.tsx";
 import {AnalyticsPage} from "./pages/AnalyticsPage.tsx";
 import {OAuth2RedirectHandler} from "./pages/OAuth2RedirectHandler.tsx";
+import { Toaster } from 'react-hot-toast';
 
 /**
  * Корневой компонент: настройка маршрутов (React Router) и общая шапка сайта
@@ -153,6 +154,7 @@ const Header = () => {
 function App() {
     return (
         <BrowserRouter>
+            <Toaster position="bottom-right" />
             <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
                 <Header/>
                 <main className="container mx-auto p-4 pt-10 flex-grow">
