@@ -51,7 +51,7 @@ export const LoginPage = () => {
             console.error('Ошибка входа:', err);
 
             if (axios.isAxiosError(err) && err.response) {
-                if (err.response.status === 403) {
+                if (err.response.status === 403 || err.response.status === 401) {
                     setError('Неверный email или пароль.');
                 } else {
                     setError(err.response.data.message || 'Произошла ошибка при входе.');

@@ -1,9 +1,6 @@
 package com.crafthub.backend.service;
 
-import com.crafthub.backend.model.Role;
-import com.crafthub.backend.model.User;
-import com.crafthub.backend.model.VerificationRequest;
-import com.crafthub.backend.model.VerificationStatus;
+import com.crafthub.backend.model.*;
 import com.crafthub.backend.repository.UserRepository;
 import com.crafthub.backend.repository.VerificationRequestRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +22,7 @@ public class VerificationService {
     private final VerificationRequestRepository verificationRepository;
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
+    private final NotificationService notificationService;
 
     // Создает новую заявку на верификацию
     @Transactional
@@ -71,13 +69,16 @@ public class VerificationService {
         }
 
         request.setStatus(status);
+        User user = request.getUser();
 
         if (status == VerificationStatus.APPROVED) {
-            User user = request.getUser();
             user.setRole(Role.ROLE_SELLER);
             userRepository.save(user);
+            notificationService.createNotification(user,"Поздравляем! Ваша заявка одобрена. Теперь вы можете выставлять свои изделия на продажу.", NotificationType.VERIFICATION);
         } else if (status == VerificationStatus.REJECTED) {
             request.setRejectionReason(reason);
+            String message = "Ваша заявка на получение статуса продавца отклонена. Причина: " + (reason != null ? reason : "не указана администратором.");
+            notificationService.createNotification(user, message, NotificationType.VERIFICATION);
         }
 
         verificationRepository.save(request);

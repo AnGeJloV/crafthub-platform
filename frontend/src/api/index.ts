@@ -23,9 +23,13 @@ apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response && error.response.status === 401) {
-            console.warn('Сессия истекла, необходим повторный вход');
-            localStorage.removeItem('authToken');
-            window.location.href = '/login';
+            const isLoginRequest = error.config.url.includes('/auth/login');
+
+            if (!isLoginRequest) {
+                console.warn('Сессия истекла, необходим повторный вход');
+                localStorage.removeItem('authToken');
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     }
