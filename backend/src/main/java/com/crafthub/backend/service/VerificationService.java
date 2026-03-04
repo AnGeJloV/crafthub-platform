@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,7 +27,7 @@ public class VerificationService {
 
     // Создает новую заявку на верификацию
     @Transactional
-    public void applyForVerification(String legalInfo, MultipartFile file) {
+    public void applyForVerification(String legalInfo, List<MultipartFile> files) {
 
         // Получаем текущего юзера
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -38,16 +39,22 @@ public class VerificationService {
             throw new IllegalStateException("У вас уже есть заявка на рассмотрении");
         }
 
-        // Сохраняем файл на диск и получаем путь
-        String filePath = fileStorageService.saveFile(file, "documents");
-
         // Создаем и сохраняем заявку в БД
         VerificationRequest request = VerificationRequest.builder()
                 .user(user)
                 .legalInfo(legalInfo)
-                .documentUrl(filePath)
                 .status(VerificationStatus.PENDING)
                 .build();
+
+        List<VerificationDocument> documents = new ArrayList<>();
+        for (MultipartFile file : files) {
+            String filePath = fileStorageService.saveFile(file, "documents");
+            documents.add(VerificationDocument.builder()
+                    .fileUrl(filePath)
+                    .request(request)
+                    .build());
+        }
+        request.setDocuments(documents);
 
         verificationRepository.save(request);
     }
@@ -80,6 +87,14 @@ public class VerificationService {
             String message = "Ваша заявка на получение статуса продавца отклонена. Причина: " + (reason != null ? reason : "не указана администратором.");
             notificationService.createNotification(user, message, NotificationType.VERIFICATION);
         }
+
+        // Удаляем файлы с жесткого диска
+        if (request.getDocuments() != null) {
+            request.getDocuments().forEach(doc -> fileStorageService.deleteFile(doc.getFileUrl()));
+            request.getDocuments().clear();
+        }
+        // Затираем JSON с личными данными в базе
+        request.setLegalInfo(null);
 
         verificationRepository.save(request);
     }

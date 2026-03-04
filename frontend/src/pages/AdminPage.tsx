@@ -17,7 +17,7 @@ import {
     ExternalLink,
     TrendingUp,
     DollarSign,
-    AlertTriangle, FileText, X
+    AlertTriangle, FileText, X, FolderOpen
 } from 'lucide-react';
 import {Link} from 'react-router-dom';
 import {useAuthStore} from "../store/authStore.ts";
@@ -37,10 +37,15 @@ interface ProductImage {
     isMain: boolean;
 }
 
+interface VerificationDocument {
+    id: number;
+    fileUrl: string;
+}
+
 interface SellerRequest {
     id: number;
     legalInfo: string;
-    documentUrl: string;
+    documents: VerificationDocument[];
     user: UserInfo;
 }
 
@@ -254,6 +259,22 @@ export const AdminPage = () => {
         }
     };
 
+    // Вспомогательная функция для парсинга JSON анкеты
+    const parseLegalInfo = (jsonString: string) => {
+        try {
+            return JSON.parse(jsonString);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {
+            return {"Информация": jsonString};
+        }
+    };
+
+    if (loading) return (
+        <div className="text-center mt-20 text-slate-400 animate-pulse font-bold uppercase tracking-widest">
+            Загрузка панели...
+        </div>
+    );
+
     if (loading) return (
         <div className="text-center mt-20 text-slate-400 animate-pulse font-bold uppercase tracking-widest">
             Загрузка панели...
@@ -303,57 +324,101 @@ export const AdminPage = () => {
                 <div className="grid gap-6">
                     {sellerRequests.length === 0 ?
                         <p className="text-center text-slate-400 py-10 italic">Новых заявок нет</p> :
-                        sellerRequests.map(req => (
-                            <div key={req.id}
-                                 className="bg-white rounded-4xl border border-slate-100 p-8 flex flex-col md:flex-row gap-8 shadow-sm transition-all hover:shadow-md">
-                                <div className="flex-1">
-                                    <h3 className="text-xl font-black text-slate-800">{req.user.fullName}</h3>
-                                    <p className="text-indigo-600 font-bold mb-4">{req.user.email}</p>
-                                    <div
-                                        className="bg-slate-50 p-5 rounded-3xl border border-slate-100 italic text-sm text-slate-600 leading-relaxed">"{req.legalInfo}"
+                        sellerRequests.map(req => {
+                            const parsedInfo = parseLegalInfo(req.legalInfo);
+
+                            return (
+                                <div key={req.id}
+                                     className="bg-white rounded-4xl border border-slate-100 p-8 flex flex-col md:flex-row gap-8 shadow-sm transition-all hover:shadow-md">
+                                    {/* Данные юзера */}
+                                    <div className="flex-1 border-r border-slate-100 pr-8">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-2xl font-black text-slate-800">{req.user.fullName}</h3>
+                                            <span
+                                                className="bg-yellow-50 text-yellow-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">Проверка</span>
+                                        </div>
+                                        <p className="text-indigo-600 font-bold mb-6 flex items-center"><Mail size={16}
+                                                                                                              className="mr-2"/> {req.user.email}
+                                        </p>
+
+                                        {/* Вывод распарсенного JSON красивым списком */}
+                                        <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 space-y-3">
+                                            {Object.entries(parsedInfo).map(([key, value]) => (
+                                                <div key={key}
+                                                     className="flex justify-between border-b border-slate-200/50 pb-2 last:border-0 last:pb-0">
+                                                    <span
+                                                        className="text-xs text-slate-400 font-bold uppercase">{key.replace(/_/g, ' ')}</span>
+                                                    <span
+                                                        className="text-sm font-black text-slate-700 text-right">{String(value)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="flex space-x-3 mt-8">
+                                            <button
+                                                onClick={() => openModal({
+                                                    isOpen: true,
+                                                    type: 'seller',
+                                                    action: 'approve',
+                                                    id: req.id,
+                                                    title: 'Одобрить заявку мастера?',
+                                                    confirmText: 'Одобрить',
+                                                    showInput: false
+                                                })}
+                                                className="flex-1 bg-green-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-700 transition-all shadow-lg"
+                                            >
+                                                Одобрить
+                                            </button>
+                                            <button
+                                                onClick={() => openModal({
+                                                    isOpen: true,
+                                                    type: 'seller',
+                                                    action: 'reject',
+                                                    id: req.id,
+                                                    title: 'Причина отказа:',
+                                                    confirmText: 'Отклонить',
+                                                    showInput: true
+                                                })}
+                                                className="flex-1 bg-white border-2 border-red-50 text-red-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-50 transition-all"
+                                            >
+                                                Отклонить
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="flex space-x-3 mt-8">
-                                        <button
-                                            onClick={() => openModal({
-                                                isOpen: true,
-                                                type: 'seller',
-                                                action: 'approve',
-                                                id: req.id,
-                                                title: 'Одобрить заявку мастера?',
-                                                confirmText: 'Одобрить',
-                                                showInput: false
-                                            })}
-                                            className="flex-1 bg-green-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-700 transition-all shadow-lg"
-                                        >
-                                            Одобрить
-                                        </button>
-                                        <button
-                                            onClick={() => openModal({
-                                                isOpen: true,
-                                                type: 'seller',
-                                                action: 'reject',
-                                                id: req.id,
-                                                title: 'Причина отказа:',
-                                                confirmText: 'Отклонить',
-                                                showInput: true
-                                            })}
-                                            className="flex-1 bg-white border-2 border-red-50 text-red-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-50 transition-all"
-                                        >
-                                            Отклонить
-                                        </button>
+
+                                    {/* Галерея загруженных документов */}
+                                    <div className="md:w-1/3 flex flex-col gap-4">
+                                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center">
+                                            <FolderOpen size={16} className="mr-2"/> Документы
+                                            ({req.documents?.length || 0})
+                                        </p>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {req.documents?.map((doc) => (
+                                                <div
+                                                    key={doc.id}
+                                                    className="aspect-square bg-slate-50 rounded-2xl overflow-hidden border-2 border-slate-100 cursor-zoom-in group relative"
+                                                    onClick={() => {
+                                                        setSelectedImage(doc.fileUrl);
+                                                        setScale(1);
+                                                    }}
+                                                >
+                                                    <SecureImage src={doc.fileUrl}
+                                                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"/>
+                                                    <div
+                                                        className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"/>
+                                                </div>
+                                            ))}
+                                            {(!req.documents || req.documents.length === 0) && (
+                                                <div
+                                                    className="col-span-2 p-10 text-center text-slate-400 bg-slate-50 rounded-2xl text-xs font-bold border border-dashed">
+                                                    Документы не прикреплены
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                                <div
-                                    className="flex-1 bg-slate-50 rounded-4xl flex items-center justify-center cursor-zoom-in overflow-hidden h-72 border border-slate-100 group"
-                                    onClick={() => {
-                                        setSelectedImage(req.documentUrl);
-                                        setScale(1);
-                                    }}>
-                                    <SecureImage src={req.documentUrl}
-                                                 className="max-h-full object-contain group-hover:scale-105 transition-transform duration-500"/>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                 </div>
             )}
 

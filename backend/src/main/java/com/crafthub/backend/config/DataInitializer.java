@@ -84,10 +84,28 @@ public class DataInitializer implements CommandLineRunner {
 
             // Юзеры на модерации
             User p1 = createUser("Олег Кожа", "oleg@crafthub.by", "password", "+375296666666", Role.ROLE_USER, "Мастер по работе с натуральной кожей. Более 8 лет создаю кошельки, ремни, обложки для документов, сумки и рюкзаки из итальянской и аргентинской кожи растительного дубления. Каждое изделие прошивается вручную седельным швом вощёной нитью, что гарантирует долговечность. Готовлюсь пройти верификацию, чтобы начать продавать свои работы на CraftHub и порадовать ценителей качественных кожаных аксессуаров.");
-            downloadAndCreateRequest(p1, "ИП Кожевников Олег Сергеевич, УНП 193284756, зарегистрирован Минским горисполкомом 15.03.2021. Юридический адрес: г. Минск, ул. Притыцкого, д. 62, кв. 14. Основной вид деятельности: производство изделий из кожи (ОКЭД 15120).", LINK_DOC_1, "oleg_doc.jpg");
+            String jsonIp = """
+                    {
+                      "Тип_деятельности": "Индивидуальный предприниматель",
+                      "ФИО": "Кожевников Олег Сергеевич",
+                      "УНП": "193284756",
+                      "Дата_регистрации": "2021-03-15",
+                      "Юридический_адрес": "г. Минск, ул. Притыцкого, д. 62, кв. 14"
+                    }
+                    """;
+            downloadAndCreateRequest(p1, jsonIp, LINK_DOC_1, "oleg_doc.jpg");
 
             User p2 = createUser("Инна Декор", "inna@crafthub.by", "password", "+375297777777", Role.ROLE_USER, "Флорист-декоратор, специализируюсь на создании интерьерных композиций из сухоцветов, стабилизированных растений и природных материалов. Мои работы — это венки на дверь, букеты в вазах, настенные панно и свадебный декор, которые сохраняют свою красоту годами без полива и ухода. Прошла обучение во флористической школе «Цветочный лофт» в Москве. Хочу пройти верификацию и предложить свои работы покупателям CraftHub.");
-            downloadAndCreateRequest(p2, "Самозанятая Иннова Инна Викторовна, справка о постановке на учёт в налоговом органе №12-45/2023 от 20.06.2023. Вид деятельности: изготовление и реализация декоративных изделий ручной работы. Адрес: г. Гродно, ул. Советская, д. 18, кв. 7.", LINK_DOC_1, "inna_doc.jpg");
+            String jsonSelfEmployed = """
+                    {
+                      "Тип_деятельности": "Самозанятый",
+                      "ФИО": "Иннова Инна Викторовна",
+                      "Личный_номер": "3150890A012PB5",
+                      "Вид_деятельности": "Создание интерьерных композиций из сухоцветов",
+                      "Регион": "г. Гродно"
+                    }
+                    """;
+            downloadAndCreateRequest(p2, jsonSelfEmployed, LINK_DOC_1, "inna_doc.jpg");
 
             // Категории
             Category ceramics = categoryRepository.findByName("CERAMICS").orElseThrow();
@@ -251,12 +269,20 @@ public class DataInitializer implements CommandLineRunner {
     private void downloadAndCreateRequest(User user, String info, String link, String fileName) {
         downloadFile(link, "documents/" + fileName);
 
-        verificationRepository.save(VerificationRequest.builder()
+        VerificationRequest req = VerificationRequest.builder()
                 .user(user)
                 .legalInfo(info)
-                .documentUrl("documents/" + fileName)
                 .status(VerificationStatus.PENDING)
-                .build());
+                .build();
+
+        req.setDocuments(List.of(
+                VerificationDocument.builder()
+                        .fileUrl("documents/" + fileName)
+                        .request(req)
+                        .build()
+        ));
+
+        verificationRepository.save(req);
     }
 
     private Product downloadAndCreateProduct(String name, String desc, BigDecimal price, int stock, ProductStatus status, Category cat, User s, String link, String fileName, String vid) {

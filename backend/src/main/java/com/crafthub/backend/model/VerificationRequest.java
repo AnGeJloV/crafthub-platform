@@ -9,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Сущность заявки на верификацию продавца.
@@ -30,12 +31,12 @@ public class VerificationRequest {
     private User user;
 
     // Юридическая информация (например, УНП или ИНН)
-    @Column(name = "legal_info", nullable = false)
+    @Column(name = "legal_info", columnDefinition = "TEXT")
     private String legalInfo;
 
-    // Путь к файлу с документом
-    @Column(name = "document_url", nullable = false)
-    private String documentUrl;
+    // Список документов
+    @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<VerificationDocument> documents;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

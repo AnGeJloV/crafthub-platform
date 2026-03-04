@@ -59,9 +59,9 @@ public class VerificationController {
     @PostMapping("/apply")
     public ResponseEntity<String> apply(
             @RequestParam("legalInfo") String legalInfo,
-            @RequestParam("file") MultipartFile file
+            @RequestPart("files") List<MultipartFile> files
     ) {
-        verificationService.applyForVerification(legalInfo, file);
+        verificationService.applyForVerification(legalInfo, files);
         return ResponseEntity.ok("Заявка успешно подана и находится на рассмотрении");
     }
 
