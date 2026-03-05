@@ -365,7 +365,7 @@ export const AdminPage = () => {
                                                     confirmText: 'Одобрить',
                                                     showInput: false
                                                 })}
-                                                className="flex-1 bg-green-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-700 transition-all shadow-lg"
+                                                className="flex-1 bg-green-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-700 transition-all shadow-lg active:scale-95"
                                             >
                                                 Одобрить
                                             </button>
@@ -379,7 +379,7 @@ export const AdminPage = () => {
                                                     confirmText: 'Отклонить',
                                                     showInput: true
                                                 })}
-                                                className="flex-1 bg-white border-2 border-red-50 text-red-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-50 transition-all"
+                                                className="flex-1 bg-red-50 text-red-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-100 active:scale-95"
                                             >
                                                 Отклонить
                                             </button>
@@ -468,7 +468,7 @@ export const AdminPage = () => {
                                                 confirmText: 'Опубликовать',
                                                 showInput: false
                                             })}
-                                            className="flex-1 bg-green-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-700 transition-all shadow-lg"
+                                            className="flex-1 bg-green-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-700 transition-all shadow-lg active:scale-95"
                                         >
                                             ОДОБРИТЬ
                                         </button>
@@ -482,7 +482,7 @@ export const AdminPage = () => {
                                                 confirmText: 'Отклонить',
                                                 showInput: true
                                             })}
-                                            className="flex-1 bg-red-50 text-red-600 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-100 transition-all border-2 border-red-100"
+                                            className="flex-1 bg-red-50 text-red-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-100 active:scale-95"
                                         >
                                             ОТКЛОНИТЬ
                                         </button>
@@ -557,7 +557,11 @@ export const AdminPage = () => {
                                             <button
                                                 disabled={isMe}
                                                 onClick={() => handleToggleStatus(u.id, u.enabled)}
-                                                className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${isMe ? 'bg-slate-50 text-slate-200 cursor-not-allowed' : u.enabled ? 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white' : 'bg-green-50 text-green-600 hover:bg-green-600 hover:text-white'}`}
+                                                className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 ${
+                                                    isMe ? 'bg-slate-50 text-slate-200 cursor-not-allowed' :
+                                                        u.enabled ? 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white border border-red-100' :
+                                                            'bg-green-600 text-white hover:bg-green-700 shadow-lg'
+                                                }`}
                                             >
                                                 {isMe ? 'Это вы' : (u.enabled ? 'Забанить' : 'Разбанить')}
                                             </button>
@@ -622,7 +626,7 @@ export const AdminPage = () => {
                                             confirmText: 'Удалить',
                                             showInput: false
                                         })}
-                                        className="px-6 py-3 bg-red-500 text-white rounded-2xl font-black text-xs uppercase hover:bg-red-600 transition-all shadow-lg flex items-center"
+                                        className="px-6 py-3 bg-red-50 text-red-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-100 active:scale-95 flex items-center"
                                     >
                                         <Trash2 size={16} className="mr-2"/> Удалить отзыв
                                     </button>

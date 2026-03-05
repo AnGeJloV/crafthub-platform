@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 import {Link} from 'react-router-dom';
 import apiClient from '../api';
 import {Clock, CheckCircle, XCircle} from 'lucide-react';
+import toast from "react-hot-toast";
 
 /**
  * Личный кабинет мастера для управления своими товарами и их статусами модерации
@@ -73,7 +74,7 @@ export const MyProductsPage = () => {
             setProducts(prev => prev.filter(p => p.id !== id));
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
-            alert('Ошибка при удалении товара');
+            toast.error('Ошибка при удалении товара');
         }
     };
 
@@ -138,13 +139,13 @@ export const MyProductsPage = () => {
                                     <div className="grid grid-cols-2 gap-3 mt-6">
                                         <Link
                                             to={`/edit-product/${product.id}`}
-                                            className="py-2.5 px-4 bg-slate-50 text-slate-600 font-bold rounded-xl text-sm text-center hover:bg-slate-100 transition-colors"
+                                            className="py-2.5 px-4 bg-slate-100 text-slate-500 font-black rounded-xl text-[10px] uppercase tracking-widest text-center hover:bg-slate-200 transition-all active:scale-95"
                                         >
                                             Изменить
                                         </Link>
                                         <button
                                             onClick={() => handleDelete(product.id)}
-                                            className="py-2.5 px-4 text-red-500 font-bold rounded-xl text-sm hover:bg-red-50 transition-colors"
+                                            className="py-2.5 px-4 bg-red-50 text-red-500 font-black rounded-xl text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-100 active:scale-95"
                                         >
                                             Удалить
                                         </button>

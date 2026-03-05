@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import apiClient from '../api';
 import {Camera, CheckCircle2, ArrowLeft} from 'lucide-react';
+import toast from "react-hot-toast";
 
 /**
  * Форма редактирования товара с загрузкой до 5 фотографий и видео с YouTube
@@ -130,11 +131,11 @@ export const EditProductPage = () => {
                 }
             });
 
-            alert('Изменения сохранены! Товар отправлен на повторную модерацию.');
+            toast.success('Изменения сохранены! Товар отправлен на повторную модерацию.');
             navigate('/my-products');
         } catch (err) {
             console.error('Ошибка сохранения:', err);
-            alert('Не удалось сохранить изменения');
+            toast.error('Не удалось сохранить изменения');
         } finally {
             setSaving(false);
         }

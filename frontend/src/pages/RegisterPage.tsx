@@ -74,30 +74,68 @@ export const RegisterPage = () => {
     };
 
     return (
-        <div className="max-w-md mx-auto mt-10">
-            <h2 className="text-2xl font-bold mb-5 text-center">Создать аккаунт</h2>
-            <form onSubmit={handleSubmit} noValidate className="space-y-6">
-                <InputField label="Полное имя" id="fullName" type="text" value={fullName}
-                            onChange={(e) => setFullName(e.target.value)} required/>
-                <InputField label="Email" id="email" type="email" value={email}
-                            onChange={(e) => setEmail(e.target.value)} required/>
-                <InputField label="Номер телефона" id="phoneNumber" type="text" value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)} required/>
-                <InputField label="Пароль" id="password" type="password" value={password}
-                            onChange={(e) => setPassword(e.target.value)} required/>
+        <div className="max-w-md mx-auto mt-10 p-8 bg-white shadow-lg rounded-xl">
+            <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Создать аккаунт</h2>
 
-                {/* Отображение ошибки, если она есть */}
-                {error && <p className="text-red-500 text-sm">{error}</p>}
+            <form onSubmit={handleSubmit} noValidate className="space-y-4">
+                <InputField
+                    label="Полное имя"
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                />
+                <InputField
+                    label="Email"
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                />
+                <InputField
+                    label="Номер телефона"
+                    id="phoneNumber"
+                    type="text"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    required
+                />
+                <InputField
+                    label="Пароль"
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                />
 
-                <div>
+                {error && (
+                    <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+                        <p className="text-red-700 text-sm">{error}</p>
+                    </div>
+                )}
+
+                <div className="pt-2">
                     <button
                         type="submit"
-                        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        className="w-full flex justify-center py-4 px-4 border border-transparent rounded-2xl shadow-xl shadow-indigo-100 text-xs font-black uppercase tracking-[0.2em] text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none transition-all active:scale-[0.98]"
                     >
                         Зарегистрироваться
                     </button>
                 </div>
             </form>
+
+            <div className="mt-8 text-center text-sm text-gray-600">
+                Уже есть аккаунт?{' '}
+                <button
+                    onClick={() => navigate('/login')}
+                    className="font-medium text-indigo-600 hover:text-indigo-500"
+                >
+                    Войти
+                </button>
+            </div>
         </div>
     );
 };

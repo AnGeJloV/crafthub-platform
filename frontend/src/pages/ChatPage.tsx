@@ -3,6 +3,7 @@ import {useSearchParams, Link, useNavigate} from 'react-router-dom';
 import apiClient from '../api';
 import {Send, MessageSquare, Trash2, PackageOpen, UserCircle} from 'lucide-react';
 import axios from 'axios';
+import toast from "react-hot-toast";
 
 /**
  * Интерфейс мессенджера для переписки между покупателем и продавцом по конкретному товару
@@ -127,7 +128,11 @@ export const ChatPage = () => {
                 void fetchDialogues();
             }
         } catch (error) {
-            if (axios.isAxiosError(error)) alert(error.response?.data?.message || 'Ошибка');
+            if (axios.isAxiosError(error)) {
+                toast.error(error.response?.data?.message || 'Ошибка при отправке сообщения');
+            } else {
+                toast.error('Произошла ошибка');
+            }
         }
     };
 

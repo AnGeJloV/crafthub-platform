@@ -3,6 +3,7 @@ import {useCartStore} from '../store/cartStore';
 import {useNavigate} from 'react-router-dom';
 import apiClient from '../api';
 import {Minus, Plus, Trash2} from 'lucide-react';
+import toast from 'react-hot-toast';
 
 /**
  * Корзина покупок: управление количеством, расчет суммы и форма "Безопасной сделки"
@@ -15,6 +16,8 @@ export const CartPage = () => {
     const [address, setAddress] = useState({city: '', street: '', house: '', index: ''});
     const [isConfirming, setIsConfirming] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+
+    const [isClearModalOpen, setIsClearModalOpen] = useState(false);
 
     const fullShippingAddress = `${address.index}, г. ${address.city}, ул. ${address.street}, д. ${address.house}`;
 
@@ -32,14 +35,25 @@ export const CartPage = () => {
             });
 
             clearCartLocal();
-            alert('Заказ успешно оформлен!');
+            toast.success('Заказ успешно оформлен!');
             navigate('/orders');
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
-            alert('Ошибка при оформлении заказа');
+            toast.error('Ошибка при оформлении заказа');
         } finally {
             setIsProcessing(false);
             setIsConfirming(false);
+        }
+    };
+
+    const handleClearCart = async () => {
+        try {
+            await clearCartServer();
+            toast.success('Корзина очищена');
+            setIsClearModalOpen(false);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {
+            toast.error('Не удалось очистить корзину');
         }
     };
 
@@ -57,8 +71,8 @@ export const CartPage = () => {
             <div className="flex justify-between items-end mb-8">
                 <h1 className="text-4xl font-black">Корзина</h1>
                 <button
-                    onClick={() => confirm('Очистить корзину?') && clearCartServer()}
-                    className="text-red-500 text-sm font-semibold hover:bg-red-50 px-3 py-1 rounded-lg transition-colors"
+                    onClick={() => setIsClearModalOpen(true)}
+                    className="bg-red-50 text-red-500 text-[10px] font-black uppercase tracking-widest px-6 py-2.5 rounded-xl hover:bg-red-500 hover:text-white transition-all border border-red-100 active:scale-95"
                 >
                     Очистить всё
                 </button>
@@ -143,7 +157,7 @@ export const CartPage = () => {
 
                     <button
                         onClick={() => {
-                            if (!address.city || !address.street) return alert('Введите адрес');
+                            if(!address.city || !address.street) return toast.error('Пожалуйста, укажите город и улицу');
                             setIsConfirming(true);
                         }}
                         className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-md active:scale-[0.98]"
@@ -178,7 +192,35 @@ export const CartPage = () => {
                             <button
                                 disabled={isProcessing}
                                 onClick={() => setIsConfirming(false)}
-                                className="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                                className="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95"
+                            >
+                                Отмена
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {isClearModalOpen && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl relative animate-in zoom-in duration-300">
+                        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+                            <Trash2 size={32} />
+                        </div>
+                        <h3 className="text-2xl font-black text-slate-800 mb-2 text-center">Очистить корзину?</h3>
+                        <p className="text-slate-400 text-sm mb-8 font-medium text-center leading-relaxed">
+                            Все выбранные товары будут удалены из вашего списка покупок.
+                        </p>
+                        <div className="flex gap-4">
+                            <button
+                                onClick={handleClearCart}
+                                className="flex-1 bg-red-50 text-red-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white border border-red-100 transition-all active:scale-95"
+                            >
+                                Удалить всё
+                            </button>
+                            <button
+                                onClick={() => setIsClearModalOpen(false)}
+                                className="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95"
                             >
                                 Отмена
                             </button>

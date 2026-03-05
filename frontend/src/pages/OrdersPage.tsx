@@ -1,9 +1,10 @@
 import {useEffect, useState, useCallback} from 'react';
 import apiClient from '../api';
-import {Truck, CheckCircle, MapPin, Info, ChevronRight, MessageSquare, Star} from 'lucide-react';
+import {Truck, CheckCircle, MapPin, Info, ChevronRight, MessageSquare, Star, X} from 'lucide-react';
 import {useAuthStore} from '../store/authStore';
 import {Link, useNavigate} from 'react-router-dom';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 /**
  * Управление заказами: история покупок для юзеров и управление продажами для мастеров
@@ -50,6 +51,23 @@ export const OrdersPage = () => {
     const [comment, setComment] = useState('');
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
+    const [decisionModal, setDecisionModal] = useState<{
+        isOpen: boolean;
+        type: 'cancel' | 'dispute' | 'delivered' | 'shipped';
+        id: number | null;
+        title: string;
+        confirmText: string;
+        showInput: boolean;
+    }>({
+        isOpen: false,
+        type: 'cancel',
+        id: null,
+        title: '',
+        confirmText: '',
+        showInput: false
+    });
+    const [reason, setReason] = useState('');
+
     const fetchOrders = useCallback(async () => {
         setLoading(true);
         try {
@@ -67,38 +85,45 @@ export const OrdersPage = () => {
         void fetchOrders();
     }, [fetchOrders]);
 
-    const handleStatusUpdate = async (id: number, status: string) => {
+    const handleConfirmDecision = async () => {
+        const { id, type, showInput } = decisionModal;
+        if (!id) return;
+
+        if (showInput && !reason.trim()) {
+            toast.error('Укажите причину');
+            return;
+        }
+
         try {
-            await apiClient.patch(`/orders/${id}/status?status=${status}`);
+            if (type === 'cancel') {
+                await apiClient.post(`/orders/${id}/cancel`, reason, { headers: {'Content-Type': 'text/plain'} });
+                toast.success('Заказ отменен');
+            } else if (type === 'dispute') {
+                await apiClient.post(`/orders/${id}/dispute`);
+                toast.success('Спор открыт');
+            } else if (type === 'shipped') {
+                await apiClient.patch(`/orders/${id}/status?status=SHIPPED`);
+                toast.success('Статус: В пути');
+            } else if (type === 'delivered') {
+                await apiClient.patch(`/orders/${id}/status?status=DELIVERED`);
+                toast.success('Заказ успешно завершен!');
+            }
+
+            closeModal();
             void fetchOrders();
-            alert('Статус успешно изменен');
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
-            alert('Не удалось изменить статус');
+            toast.error('Не удалось выполнить действие');
         }
     };
 
-    const handleCancel = async (id: number) => {
-        const reason = prompt('Укажите причину отмены заказа:');
-        if (!reason || reason.trim() === '') return;
-        try {
-            await apiClient.post(`/orders/${id}/cancel`, reason, {headers: {'Content-Type': 'text/plain'}});
-            void fetchOrders();
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (error) {
-            alert('Ошибка при отмене');
-        }
+    const openModal = (config: typeof decisionModal) => {
+        setDecisionModal({ ...config, isOpen: true });
+        setReason('');
     };
 
-    const handleDispute = async (id: number) => {
-        if (!window.confirm('Открыть спор?')) return;
-        try {
-            await apiClient.post(`/orders/${id}/dispute`);
-            void fetchOrders();
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (error) {
-            alert('Ошибка при открытии спора');
-        }
+    const closeModal = () => {
+        setDecisionModal(prev => ({ ...prev, isOpen: false }));
     };
 
     const handleOpenChat = async (order: Order) => {
@@ -119,7 +144,7 @@ export const OrdersPage = () => {
             }
         } catch (e) {
             console.error(e);
-            alert('Ошибка при открытии чата');
+            toast.error('Ошибка при открытии чата');
         }
     };
 
@@ -132,13 +157,17 @@ export const OrdersPage = () => {
                 productId: reviewModal.productId,
                 orderId: reviewModal.orderId
             });
-            alert('Отзыв опубликован!');
+            toast.success('Отзыв опубликован!');
             setReviewModal({isOpen: false, productId: null, orderId: null, productName: ''});
             setRating(5);
             setComment('');
             void fetchOrders();
         } catch (error) {
-            if (axios.isAxiosError(error)) alert(error.response?.data?.message || 'Ошибка');
+            if (axios.isAxiosError(error)) {
+                toast.error(error.response?.data?.message || 'Ошибка при публикации отзыва');
+            } else {
+                toast.error('Произошла ошибка');
+            }
         } finally {
             setIsSubmittingReview(false);
         }
@@ -269,19 +298,17 @@ export const OrdersPage = () => {
                                 </div>
 
                                 <div className="flex flex-wrap items-center justify-end gap-4 mt-6">
-                                    <button onClick={() => handleOpenChat(order)}
-                                            className="bg-slate-50 text-slate-600 px-6 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest flex items-center hover:bg-indigo-50 hover:text-indigo-600 transition-all border border-slate-100">
+                                    <button
+                                        onClick={() => handleOpenChat(order)}
+                                        className="bg-white text-indigo-600 border-2 border-indigo-100 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center hover:bg-indigo-50 hover:border-indigo-200 transition-all active:scale-95"
+                                    >
                                         <MessageSquare size={16} className="mr-2"/> Написать в чат
                                     </button>
 
                                     {activeTab === 'sales' && order.status === 'PAID' && (
                                         <>
-                                            <button onClick={() => handleCancel(order.id)}
-                                                    className="px-6 py-4 text-red-400 font-bold text-[10px] uppercase hover:text-red-600 transition-colors">Отменить
-                                                заказ
-                                            </button>
-                                            <button onClick={() => handleStatusUpdate(order.id, 'SHIPPED')}
-                                                    className="bg-slate-900 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center hover:bg-indigo-600 transition-all shadow-xl">
+                                            <button onClick={() => openModal({ isOpen: true, type: 'cancel', id: order.id, title: 'Причина отмены заказа:', confirmText: 'Отменить заказ', showInput: true })} className="px-6 py-4 bg-red-50 text-red-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-100 active:scale-95">Отменить заказ</button>
+                                            <button onClick={() => openModal({ isOpen: true, type: 'shipped', id: order.id, title: 'Отметить заказ как отправленный?', confirmText: 'Да, отправлено', showInput: false })} className="bg-green-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center hover:bg-green-700 transition-all shadow-xl active:scale-95">
                                                 <Truck size={16} className="mr-2 inline"/> Отметить отправку
                                             </button>
                                         </>
@@ -289,26 +316,18 @@ export const OrdersPage = () => {
 
                                     {activeTab === 'purchases' && order.status === 'SHIPPED' && (
                                         <>
-                                            <button onClick={() => handleDispute(order.id)}
-                                                    className="px-6 py-4 text-amber-500 font-bold text-[10px] uppercase hover:underline tracking-widest transition-colors">Товар
-                                                не получен?
-                                            </button>
-                                            <button onClick={() => handleStatusUpdate(order.id, 'DELIVERED')}
-                                                    className="bg-green-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center hover:bg-green-700 transition-all shadow-xl">
+                                            <button onClick={() => openModal({ isOpen: true, type: 'dispute', id: order.id, title: 'Открыть спор по заказу?', confirmText: 'Открыть спор', showInput: false })} className="px-6 py-4 bg-red-50 text-red-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-100 active:scale-95">Товар не получен?</button>
+                                            <button onClick={() => openModal({ isOpen: true, type: 'delivered', id: order.id, title: 'Вы подтверждаете получение товара?', confirmText: 'Подтверждаю', showInput: false })} className="bg-green-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center hover:bg-green-700 transition-all shadow-xl active:scale-95">
                                                 <CheckCircle size={16} className="mr-2 inline"/> Подтвердить получение
                                             </button>
                                         </>
                                     )}
 
                                     {activeTab === 'sales' && order.status === 'DISPUTED' && (
-                                        <button onClick={() => handleCancel(order.id)}
-                                                className="bg-red-500 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase hover:bg-red-600 transition-all shadow-md">Вернуть
-                                            средства</button>
+                                        <button onClick={() => openModal({ isOpen: true, type: 'cancel', id: order.id, title: 'Вернуть средства покупателю?', confirmText: 'Вернуть деньги', showInput: true })} className="bg-red-50 text-red-500 px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white border border-red-100 transition-all active:scale-95">Вернуть средства</button>
                                     )}
                                     {activeTab === 'purchases' && order.status === 'DISPUTED' && (
-                                        <button onClick={() => handleStatusUpdate(order.id, 'DELIVERED')}
-                                                className="bg-green-500 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase hover:bg-green-600 transition-all shadow-md">Спор
-                                            решен (Завершить)</button>
+                                        <button onClick={() => openModal({ isOpen: true, type: 'delivered', id: order.id, title: 'Спор решен? Нажмите для завершения.', confirmText: 'Спор решен', showInput: false })} className="bg-green-600 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-700 shadow-xl transition-all active:scale-95">Спор решен (Завершить)</button>
                                     )}
 
                                     {order.status === 'COMPLETED' && (
@@ -345,14 +364,65 @@ export const OrdersPage = () => {
                                   className="w-full border-2 border-slate-50 bg-slate-50 p-5 rounded-3xl outline-none focus:bg-white focus:border-indigo-500 transition-all text-sm mb-8 resize-none font-medium"
                                   rows={4} value={comment} onChange={(e) => setComment(e.target.value)}/>
                         <div className="flex space-x-4">
-                            <button disabled={isSubmittingReview} onClick={submitReview}
-                                    className="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 disabled:bg-slate-300 transition-all">{isSubmittingReview ? 'Публикация...' : 'Опубликовать'}</button>
+                            <button
+                                disabled={isSubmittingReview}
+                                onClick={submitReview}
+                                className="flex-1 bg-green-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-700 active:scale-95 transition-all shadow-lg"
+                            >
+                                {isSubmittingReview ? 'Публикация...' : 'Опубликовать'}
+                            </button>
                             <button disabled={isSubmittingReview} onClick={() => {
                                 setReviewModal({isOpen: false, productId: null, orderId: null, productName: ''});
                                 setRating(5);
                                 setComment('');
                             }}
-                                    className="flex-1 bg-slate-100 text-slate-400 py-4 rounded-2xl font-black text-xs uppercase tracking-widest">Отмена
+                                    className="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 active:scale-95 transition-all"
+                            >
+                                Отмена
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {decisionModal.isOpen && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-[2.5rem] p-10 max-w-md w-full shadow-2xl relative animate-in zoom-in duration-300">
+                        <button onClick={closeModal} className="absolute top-6 right-6 text-slate-300 hover:text-slate-900 transition-colors">
+                            <X size={24} />
+                        </button>
+
+                        <h3 className="text-2xl font-black text-slate-800 mb-2">{decisionModal.title}</h3>
+                        <p className="text-slate-400 text-sm mb-8 font-medium leading-relaxed">
+                            Подтвердите ваше действие.
+                        </p>
+
+                        {decisionModal.showInput && (
+                            <textarea
+                                autoFocus
+                                className="w-full border-2 border-slate-50 bg-slate-50 p-5 rounded-3xl outline-none focus:bg-white focus:border-indigo-500 transition-all text-sm mb-8 resize-none font-medium"
+                                rows={4}
+                                placeholder="Укажите причину..."
+                                value={reason}
+                                onChange={(e) => setReason(e.target.value)}
+                            />
+                        )}
+
+                        <div className="flex gap-4">
+                            <button
+                                onClick={handleConfirmDecision}
+                                className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 ${
+                                    decisionModal.type === 'cancel' || decisionModal.type === 'dispute'
+                                        ? 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white border border-red-100'
+                                        : 'bg-green-600 text-white hover:bg-green-700'
+                                }`}
+                            >
+                                {decisionModal.confirmText}
+                            </button>
+                            <button
+                                onClick={closeModal}
+                                className="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95"
+                            >
+                                Отмена
                             </button>
                         </div>
                     </div>

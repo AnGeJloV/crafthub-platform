@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import {TrendingUp, ShoppingBag, DollarSign, Award, ArrowLeft, Save} from 'lucide-react';
 import {useNavigate} from 'react-router-dom';
+import toast from "react-hot-toast";
 
 /**
  *  Аналитика для продавца: графики выручки, топ продаж и генерация PDF-отчетов
@@ -48,7 +49,7 @@ export const AnalyticsPage = () => {
             link.remove();
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
-            alert('Ошибка при загрузке отчета');
+            toast.error('Ошибка при загрузке отчета');
         }
     };
 

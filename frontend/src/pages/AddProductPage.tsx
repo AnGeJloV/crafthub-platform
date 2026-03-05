@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import apiClient from '../api';
 import {Youtube, Camera, CheckCircle2, X} from 'lucide-react';
+import toast from "react-hot-toast";
 
 /**
  * Форма создания товара с загрузкой до 5 фотографий и видео с YouTube
@@ -45,7 +46,7 @@ export const AddProductPage = () => {
             const filesArray = Array.from(e.target.files);
 
             if (selectedFiles.length + filesArray.length > 5) {
-                alert("Можно загрузить не более 5 фотографий");
+                toast.error("Можно загрузить не более 5 фотографий");
                 return;
             }
 
@@ -74,11 +75,11 @@ export const AddProductPage = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (selectedFiles.length === 0) return alert('Добавьте хотя бы одно фото товара');
+        if (selectedFiles.length === 0) return toast.error('Добавьте хотя бы одно фото товара');
 
         const videoId = form.youtubeUrl ? extractYoutubeId(form.youtubeUrl) : null;
         if (form.youtubeUrl && !videoId) {
-            return alert('Некорректная ссылка на YouTube видео');
+            return toast.error('Некорректная ссылка на YouTube видео');
         }
 
         setLoading(true);
@@ -105,11 +106,11 @@ export const AddProductPage = () => {
             await apiClient.post('/products', formData, {
                 headers: {'Content-Type': 'multipart/form-data'}
             });
-            alert('Товар успешно создан и отправлен на модерацию!');
+            toast.success('Товар успешно создан и отправлен на модерацию!');
             navigate('/my-products');
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
-            alert('Ошибка при создании товара. Проверьте данные.');
+            toast.error('Ошибка при создании товара. Проверьте данные.');
         } finally {
             setLoading(false);
         }

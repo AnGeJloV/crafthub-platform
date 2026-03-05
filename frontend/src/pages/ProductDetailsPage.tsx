@@ -9,6 +9,7 @@ import {
     Flag, Trash2
 } from 'lucide-react';
 import axios from 'axios';
+import toast from "react-hot-toast";
 
 /**
  * Полная карточка товара: описание, видеообзор, отзывы и кнопка связи с мастером
@@ -86,7 +87,7 @@ export const ProductDetailsPage = () => {
             navigate('/cart');
         } catch (error) {
             if (axios.isAxiosError(error)) {
-                alert(error.response?.data?.message || 'Ошибка добавления');
+                toast.error(error.response?.data?.message || 'Ошибка при добавлении в корзину');
             }
         }
     };
@@ -101,17 +102,17 @@ export const ProductDetailsPage = () => {
             else navigate(`/chat?product=${product.id}&recipient=${product.sellerId}&name=${encodeURIComponent(product.sellerName)}`);
         } catch (err) {
             console.error(err);
-            alert('Ошибка при проверке диалога');
+            toast.error('Ошибка при проверке диалога');
         }
     };
 
     const handleReportReview = async (reviewId: number) => {
         try {
             await apiClient.patch(`/reviews/${reviewId}/report`);
-            alert('Жалоба отправлена модератору. Спасибо за помощь!');
+            toast.success('Жалоба отправлена модератору. Спасибо за помощь!');
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
-            alert('Не удалось отправить жалобу');
+            toast.error('Не удалось отправить жалобу');
         }
     };
 
@@ -120,10 +121,10 @@ export const ProductDetailsPage = () => {
         try {
             await apiClient.delete(`/reviews/admin/${reviewId}`);
             setReviews(prev => prev.filter(r => r.id !== reviewId));
-            alert('Отзыв удален');
+            toast.success('Отзыв удален');
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
-            alert('Ошибка при удалении отзыва');
+            toast.error('Ошибка при удалении отзыва');
         }
     };
 

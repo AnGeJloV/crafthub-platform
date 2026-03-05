@@ -139,8 +139,7 @@ const Header = () => {
                         <div className="flex items-center space-x-4">
                             <Link to="/login"
                                   className="text-sm font-bold uppercase tracking-widest hover:text-indigo-400">Войти</Link>
-                            <Link to="/register"
-                                  className="bg-white text-slate-900 px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-indigo-500 hover:text-white transition-all">
+                            <Link to="/register" className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 shadow-lg shadow-indigo-500/20 transition-all active:scale-95">
                                 Регистрация
                             </Link>
                         </div>
@@ -155,7 +154,7 @@ function App() {
     return (
         <BrowserRouter>
             <Toaster position="bottom-right" />
-            <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
+            <div className="min-h-screen bg-[#F8FAFF] text-slate-900 flex flex-col">
                 <Header/>
                 <main className="container mx-auto p-4 pt-10 flex-grow">
                     <Routes>

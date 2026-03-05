@@ -118,7 +118,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({product}) => {
                         className={`w-full py-3 text-white text-sm font-bold rounded-2xl transition-all active:scale-[0.97] ${
                             product.stockQuantity <= 0
                                 ? 'bg-slate-300 cursor-not-allowed'
-                                : 'bg-slate-900 hover:bg-indigo-600 shadow-lg shadow-slate-200'
+                                : 'bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-100'
                         }`}
                     >
                         {product.stockQuantity <= 0 ? 'Нет в наличии' : 'Добавить в корзину'}
