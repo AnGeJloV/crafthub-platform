@@ -54,7 +54,8 @@ public class UserService {
                 user.getId(), user.getEmail(), user.getFullName(), user.getPhoneNumber(),
                 user.getRole().name(), user.getAvatarUrl(), user.getBio(),
                 user.getAverageRating(), user.getReviewsCount(),
-                user.getCreatedAt(), totalOrders, user.isEnabled(), products
+                user.getCreatedAt(), totalOrders, user.isEnabled(), products,
+                user.getCity(), user.getStreet(), user.getHouse(), user.getZipCode()
         );
     }
 
@@ -65,6 +66,10 @@ public class UserService {
         user.setFullName(request.fullName());
         user.setPhoneNumber(request.phoneNumber());
         user.setBio(request.bio());
+        user.setCity(request.city());
+        user.setStreet(request.street());
+        user.setHouse(request.house());
+        user.setZipCode(request.zipCode());
         userRepository.save(user);
     }
 

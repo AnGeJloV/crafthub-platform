@@ -1,8 +1,8 @@
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useCartStore} from '../store/cartStore';
 import {useNavigate} from 'react-router-dom';
 import apiClient from '../api';
-import {Minus, Plus, Trash2} from 'lucide-react';
+import {Minus, Plus, Trash2, Save} from 'lucide-react';
 import toast from 'react-hot-toast';
 
 /**
@@ -14,16 +14,74 @@ export const CartPage = () => {
     const navigate = useNavigate();
 
     const [address, setAddress] = useState({city: '', street: '', house: '', index: ''});
+    const [saveAddress, setSaveAddress] = useState(false);
+    const [hasSavedAddress, setHasSavedAddress] = useState(false);
+
+
     const [isConfirming, setIsConfirming] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
 
     const [isClearModalOpen, setIsClearModalOpen] = useState(false);
 
+    useEffect(() => {
+        const fetchProfileAddress = async () => {
+            try {
+                const res = await apiClient.get('/users/me');
+                if (res.data.city && res.data.street) {
+                    setAddress({
+                        city: res.data.city,
+                        street: res.data.street,
+                        house: res.data.house || '',
+                        index: res.data.zipCode || ''
+                    });
+                    setHasSavedAddress(true);
+                }
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            } catch (e) {
+                console.error("Не удалось загрузить адрес из профиля");
+            }
+        };
+        void fetchProfileAddress();
+    }, []);
+
     const fullShippingAddress = `${address.index}, г. ${address.city}, ул. ${address.street}, д. ${address.house}`;
+
+    const handleForgetAddress = async () => {
+        try {
+            await apiClient.patch('/users/me', {
+                fullName: (await apiClient.get('/users/me')).data.fullName, // Нам нужно передать обязательные поля
+                phoneNumber: (await apiClient.get('/users/me')).data.phoneNumber,
+                city: null,
+                street: null,
+                house: null,
+                zipCode: null
+            });
+            setAddress({city: '', street: '', house: '', index: ''});
+            setHasSavedAddress(false);
+            setSaveAddress(false);
+            toast.success('Адрес удален');
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {
+            toast.error('Не удалось удалить адрес');
+        }
+    };
 
     const confirmPurchase = async () => {
         setIsProcessing(true);
         try {
+            if (saveAddress) {
+                const profile = (await apiClient.get('/users/me')).data;
+                await apiClient.patch('/users/me', {
+                    fullName: profile.fullName,
+                    phoneNumber: profile.phoneNumber,
+                    bio: profile.bio,
+                    city: address.city,
+                    street: address.street,
+                    house: address.house,
+                    zipCode: address.index
+                });
+            }
+
             const orderItems = items.map(item => ({
                 productId: item.productId,
                 quantity: item.quantity
@@ -112,7 +170,7 @@ export const CartPage = () => {
                             <div className="text-right flex flex-col justify-between h-24 ml-4">
                                 <button
                                     onClick={() => removeItem(item.productId)}
-                                    className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all self-end"
+                                    className="p-2 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all self-end border border-red-100"
                                     title="Удалить"
                                 >
                                     <Trash2 size={18}/>
@@ -148,6 +206,37 @@ export const CartPage = () => {
                         </div>
                     </div>
 
+                    {hasSavedAddress && (
+                        <label className="flex items-center space-x-1 mb-4 cursor-pointer group">
+                            <div className="relative flex items-center">
+                                <button
+                                    onClick={handleForgetAddress}
+                                    className="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all border border-red-100"
+                                >
+                                    <Trash2 size={14}/>
+                                </button>
+                            </div>
+                            <span className="text-xs font-bold text-red-400 group-hover:text-red-500 transition-colors">Забыть сохраненный адрес</span>
+                        </label>
+                    )}
+
+                    {!hasSavedAddress && (
+                        <label className="flex items-center space-x-1 mb-4 cursor-pointer group">
+                            <div className="relative flex items-center">
+                                <input
+                                    type="checkbox"
+                                    className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-slate-200 transition-all checked:border-indigo-600 checked:bg-indigo-600"
+                                    checked={saveAddress}
+                                    onChange={(e) => setSaveAddress(e.target.checked)}
+                                />
+                                <Save size={12}
+                                      className="absolute left-1 text-white opacity-0 peer-checked:opacity-100 transition-opacity"/>
+                            </div>
+                            <span
+                                className="text-xs font-bold text-slate-500 group-hover:text-indigo-600 transition-colors">Запомнить этот адрес</span>
+                        </label>
+                    )}
+
                     <div className="border-t pt-4 mb-6">
                         <div className="flex justify-between items-center mb-2">
                             <span className="text-gray-500 font-medium">К оплате:</span>
@@ -157,7 +246,7 @@ export const CartPage = () => {
 
                     <button
                         onClick={() => {
-                            if(!address.city || !address.street) return toast.error('Пожалуйста, укажите город и улицу');
+                            if (!address.city || !address.street) return toast.error('Пожалуйста, укажите город и улицу');
                             setIsConfirming(true);
                         }}
                         className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-md active:scale-[0.98]"
@@ -202,10 +291,13 @@ export const CartPage = () => {
             )}
 
             {isClearModalOpen && (
-                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl relative animate-in zoom-in duration-300">
-                        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-6 mx-auto">
-                            <Trash2 size={32} />
+                <div
+                    className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div
+                        className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl relative animate-in zoom-in duration-300">
+                        <div
+                            className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+                            <Trash2 size={32}/>
                         </div>
                         <h3 className="text-2xl font-black text-slate-800 mb-2 text-center">Очистить корзину?</h3>
                         <p className="text-slate-400 text-sm mb-8 font-medium text-center leading-relaxed">

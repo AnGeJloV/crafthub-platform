@@ -18,6 +18,10 @@ public record UserProfileResponse(
         java.time.LocalDateTime createdAt,
         long totalOrders,
         boolean enabled,
-        List<ProductResponse> products
+        List<ProductResponse> products,
+        String city,
+        String street,
+        String house,
+        String zipCode
 ) {
 }

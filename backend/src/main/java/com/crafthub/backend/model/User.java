@@ -66,6 +66,18 @@ public class User implements UserDetails {
     @Column(name = "is_enabled")
     private boolean enabled = true; // заблокирован юзер или нет
 
+    @Column(name = "city")
+    private String city;
+
+    @Column(name = "street")
+    private String street;
+
+    @Column(name = "house")
+    private String house;
+
+    @Column(name = "zip_code")
+    private String zipCode;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

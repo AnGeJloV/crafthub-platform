@@ -14,6 +14,10 @@ public record UpdateProfileRequest(
         String phoneNumber,
 
         @Size(max = 1000, message = "О себе не более 1000 символов")
-        String bio
+        String bio,
+        String city,
+        String street,
+        String house,
+        String zipCode
 ) {
 }
