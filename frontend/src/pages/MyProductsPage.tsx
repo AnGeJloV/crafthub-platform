@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 import {Link} from 'react-router-dom';
 import apiClient from '../api';
-import {Clock, CheckCircle, XCircle} from 'lucide-react';
+import {Clock, CheckCircle, XCircle, X, Trash2} from 'lucide-react';
 import toast from "react-hot-toast";
 
 /**
@@ -26,6 +26,11 @@ interface Product {
 export const MyProductsPage = () => {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, id: number | null}>({
+        isOpen: false,
+        id: null
+    });
 
     useEffect(() => {
         apiClient.get('/products/my')
@@ -63,15 +68,22 @@ export const MyProductsPage = () => {
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!window.confirm('Вы уверены, что хотите удалить этот товар? Фотографии также будут удалены.')) {
-            return;
-        }
+    const openDeleteModal = (id: number) => {
+        setDeleteModal({ isOpen: true, id });
+    };
+
+    const closeDeleteModal = () => {
+        setDeleteModal({ isOpen: false, id: null });
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteModal.id) return;
 
         try {
-            await apiClient.delete(`/products/${id}`);
-
-            setProducts(prev => prev.filter(p => p.id !== id));
+            await apiClient.delete(`/products/${deleteModal.id}`);
+            setProducts(prev => prev.filter(p => p.id !== deleteModal.id));
+            toast.success('Товар успешно удален');
+            closeDeleteModal();
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
             toast.error('Ошибка при удалении товара');
@@ -144,7 +156,7 @@ export const MyProductsPage = () => {
                                             Изменить
                                         </Link>
                                         <button
-                                            onClick={() => handleDelete(product.id)}
+                                            onClick={() => openDeleteModal(product.id)}
                                             className="py-2.5 px-4 bg-red-50 text-red-500 font-black rounded-xl text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-100 active:scale-95"
                                         >
                                             Удалить
@@ -154,6 +166,39 @@ export const MyProductsPage = () => {
                             </div>
                         );
                     })}
+                </div>
+            )}
+            {deleteModal.isOpen && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl relative animate-in zoom-in duration-300">
+                        <button onClick={closeDeleteModal} className="absolute top-6 right-6 text-slate-300 hover:text-slate-900 transition-colors">
+                            <X size={24} />
+                        </button>
+
+                        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+                            <Trash2 size={32} />
+                        </div>
+
+                        <h3 className="text-2xl font-black text-slate-800 mb-2 text-center uppercase tracking-tighter">Удалить товар?</h3>
+                        <p className="text-slate-400 text-sm mb-8 font-medium text-center leading-relaxed">
+                            Вы уверены? Это действие нельзя будет отменить.
+                        </p>
+
+                        <div className="flex gap-4">
+                            <button
+                                onClick={handleConfirmDelete}
+                                className="flex-1 bg-red-50 text-red-500 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white border border-red-100 transition-all active:scale-95"
+                            >
+                                Да, удалить
+                            </button>
+                            <button
+                                onClick={closeDeleteModal}
+                                className="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95"
+                            >
+                                Отмена
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
