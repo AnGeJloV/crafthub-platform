@@ -1,7 +1,9 @@
 package com.crafthub.backend.repository;
 
+import com.crafthub.backend.dto.stats.TopSellerStats;
 import com.crafthub.backend.model.Order;
 import com.crafthub.backend.model.OrderStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -37,6 +39,21 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE o.status = 'COMPLETED'")
     BigDecimal calculateTotalGmv();
 
-    // Количество активных споров
+    // Количество всех завершенных заказов на платформе
     long countByStatus(OrderStatus status);
+
+    // График оборота всей платформы по дням
+    @Query(value = "SELECT DATE_FORMAT(created_at, '%Y-%m-%d') as date, SUM(total_amount) as val " +
+            "FROM orders WHERE status = 'COMPLETED' GROUP BY date ORDER BY date ASC", nativeQuery = true)
+    List<Object[]> getPlatformDailySalesRaw();
+
+    // Топ-5 мастеров по количеству проданных товаров
+    @Query("SELECT new com.crafthub.backend.dto.stats.TopSellerStats(" +
+            "s.fullName, SUM(i.quantity), SUM(i.priceAtPurchase * i.quantity), s.averageRating) " +
+            "FROM OrderItem i JOIN i.order o JOIN i.product.seller s " +
+            "WHERE o.status = 'COMPLETED' " +
+            "GROUP BY s.id, s.fullName, s.averageRating " +
+            "ORDER BY SUM(i.quantity) DESC")
+    List<TopSellerStats> findTopSellers(Pageable pageable);
+
 }

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -65,13 +66,31 @@ public class StatisticsService {
         BigDecimal gmv = orderRepository.calculateTotalGmv();
         if (gmv == null) gmv = BigDecimal.ZERO;
 
+        long totalCompletedSales = orderRepository.countByStatus(OrderStatus.COMPLETED);
+
+        BigDecimal avgCheck = BigDecimal.ZERO;
+        if (totalCompletedSales > 0) {
+            avgCheck = gmv.divide(BigDecimal.valueOf(totalCompletedSales), 2, RoundingMode.HALF_UP);
+        }
+
+        List<Object[]> rawHistory = orderRepository.getPlatformDailySalesRaw();
+        List<ChartPoint> platformGrowth = rawHistory.stream()
+                .map(row -> new ChartPoint(
+                        row[0].toString(),
+                        ((Number) row[1]).doubleValue()
+                ))
+                .collect(Collectors.toList());
+
+        List<TopSellerStats> topSellers = orderRepository.findTopSellers(PageRequest.of(0, 5));
+
         return new AdminStatsResponse(
                 gmv,
                 userRepository.count(),
-                userRepository.findAll().stream().filter(u -> u.getRole() == Role.ROLE_SELLER).count(),
+                totalCompletedSales,
                 productRepository.count(),
-                List.of(),
-                orderRepository.countByStatus(OrderStatus.DISPUTED)
+                avgCheck,
+                platformGrowth,
+                topSellers
         );
     }
 

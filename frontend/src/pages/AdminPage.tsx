@@ -1,6 +1,7 @@
 import React, {useEffect, useState, useCallback} from 'react';
 import apiClient from '../api';
 import {SecureImage} from '../components/SecureImage';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import {
     UserCheck,
     PackageSearch,
@@ -17,7 +18,11 @@ import {
     ExternalLink,
     TrendingUp,
     DollarSign,
-    AlertTriangle, FileText, X, FolderOpen
+    FileText,
+    X,
+    FolderOpen,
+    ShoppingBag,
+    Award
 } from 'lucide-react';
 import {Link} from 'react-router-dom';
 import {useAuthStore} from "../store/authStore.ts";
@@ -82,12 +87,26 @@ interface ReportedReview {
     productName: string;
 }
 
+interface ChartPoint {
+    label: string;
+    value: number;
+}
+
+interface TopSellerStats {
+    sellerName: string;
+    totalSales: number;
+    totalRevenue: number;
+    averageRating: number;
+}
+
 interface AdminStats {
     totalGmv: number;
     totalUsers: number;
-    totalSellers: number;
+    totalSales: number;
     totalProducts: number;
-    activeDisputes: number;
+    averageCheck: number;
+    platformGrowth: ChartPoint[];
+    topSellers: TopSellerStats[];
 }
 
 export const AdminPage = () => {
@@ -638,30 +657,115 @@ export const AdminPage = () => {
 
             {/* Контент: Аналитика */}
             {activeTab === 'stats' && adminStats && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in duration-500">
-                    <div
-                        className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm text-center relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-50 rounded-bl-[2.5rem]"/>
-                        <DollarSign className="mx-auto text-indigo-500 mb-4 relative z-10" size={32}/>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Общий
-                            оборот</p>
-                        <p className="text-3xl font-black text-indigo-600 relative z-10">{adminStats.totalGmv.toFixed(2)} BYN</p>
+                <div className="animate-in fade-in duration-500">
+
+                    {/* KPI Карточки */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm text-center relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-50 rounded-bl-[2.5rem]" />
+                            <DollarSign className="mx-auto text-indigo-500 mb-4 relative z-10" size={32} />
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Оборот платформы</p>
+                            <p className="text-3xl font-black text-indigo-600 relative z-10">{adminStats.totalGmv.toFixed(2)} BYN</p>
+                        </div>
+
+                        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm text-center relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-50 rounded-bl-[2.5rem]" />
+                            <ShoppingBag className="mx-auto text-emerald-500 mb-4 relative z-10" size={32} />
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Успешных сделок</p>
+                            <p className="text-3xl font-black text-emerald-600 relative z-10">{adminStats.totalSales}</p>
+                        </div>
+
+                        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
+                            <Users className="mx-auto text-slate-400 mb-4" size={32} />
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Пользователи</p>
+                            <p className="text-3xl font-black text-slate-800">{adminStats.totalUsers}</p>
+                        </div>
+
+                        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
+                            <TrendingUp className="mx-auto text-slate-400 mb-4" size={32} />
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Средний чек</p>
+                            <p className="text-3xl font-black text-slate-800">{adminStats.averageCheck.toFixed(2)} BYN</p>
+                        </div>
                     </div>
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
-                        <Users className="mx-auto text-slate-400 mb-4" size={32}/>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Пользователи</p>
-                        <p className="text-3xl font-black text-slate-800">{adminStats.totalUsers}</p>
-                    </div>
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
-                        <UserCheck className="mx-auto text-emerald-500 mb-4" size={32}/>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Мастера</p>
-                        <p className="text-3xl font-black text-emerald-600">{adminStats.totalSellers}</p>
-                    </div>
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
-                        <AlertTriangle className="mx-auto text-red-500 mb-4" size={32}/>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Активные
-                            споры</p>
-                        <p className="text-3xl font-black text-red-600">{adminStats.activeDisputes}</p>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                        {/* График оборота */}
+                        <div className="lg:col-span-3 bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100">
+                            <h3 className="text-lg font-black text-slate-800 mb-8 uppercase tracking-widest flex items-center">
+                                <TrendingUp className="mr-2 text-indigo-500" size={20} /> Динамика выручки
+                            </h3>
+                            <div className="h-80 w-full">
+                                {adminStats.platformGrowth.length === 0 ? (
+                                    <div className="h-full flex items-center justify-center text-slate-300 font-bold uppercase text-xs">
+                                        Недостаточно данных для графика
+                                    </div>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={adminStats.platformGrowth}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                            <XAxis
+                                                dataKey="label"
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 'bold'}}
+                                                tickFormatter={(str) => new Date(str).toLocaleDateString('ru-RU', {day: 'numeric', month: 'short'})}
+                                            />
+                                            <YAxis hide domain={['auto', 'auto']} />
+                                            <Tooltip
+                                                contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
+                                                labelStyle={{fontWeight: 'bold', color: '#1e293b'}}
+                                                formatter={(value: unknown) => [`${Number(value).toFixed(2)} BYN`, 'Выручка']}
+                                            />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="value"
+                                                stroke="#6366f1"
+                                                strokeWidth={4}
+                                                dot={{ r: 4, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }}
+                                                activeDot={{ r: 8, strokeWidth: 0 }}
+                                            />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Топ продавцов */}
+                        <div className="lg:col-span-2 bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100">
+                            <h3 className="text-lg font-black text-slate-800 mb-8 uppercase tracking-widest flex items-center">
+                                <Award className="mr-2 text-yellow-500" size={20} /> Топ мастеров
+                            </h3>
+                            <div className="space-y-6">
+                                {adminStats.topSellers.length === 0 ? (
+                                    <p className="text-center text-slate-300 py-10 italic font-medium">Пока нет завершенных сделок</p>
+                                ) : adminStats.topSellers.map((seller, idx) => (
+                                    <div key={idx} className="flex items-center justify-between group">
+                                        <div className="flex items-center">
+                                            <span className={`w-8 h-8 rounded-xl flex items-center justify-center mr-4 font-black text-xs ${
+                                                idx === 0 ? 'bg-yellow-100 text-yellow-600' :
+                                                    idx === 1 ? 'bg-slate-100 text-slate-500' :
+                                                        idx === 2 ? 'bg-amber-100 text-amber-700' :
+                                                            'bg-slate-50 text-slate-400'
+                                            }`}>
+                                                {idx + 1}
+                                            </span>
+                                            <div>
+                                                <span className="text-sm font-bold text-slate-800 block leading-none mb-1">{seller.sellerName}</span>
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center">
+                                                    <Star size={10} className="mr-1 text-yellow-400 fill-yellow-400" /> {seller.averageRating.toFixed(1)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-[10px] font-black uppercase mb-1 inline-block">
+                                                {seller.totalSales} продаж
+                                            </span>
+                                            <p className="text-xs font-black text-slate-900">{seller.totalRevenue.toFixed(2)} BYN</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
@@ -686,7 +790,7 @@ export const AdminPage = () => {
 
             {decisionModal.isOpen && (
                 <div
-                    className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
                     <div
                         className="bg-white rounded-[2.5rem] p-10 max-w-md w-full shadow-2xl relative animate-in zoom-in duration-300">
                         <button onClick={closeModal}

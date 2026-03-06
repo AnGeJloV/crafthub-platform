@@ -9,9 +9,10 @@ import java.util.List;
 public record AdminStatsResponse(
         BigDecimal totalGmv, // Оборот всей платформы
         long totalUsers, // Всего юзеров
-        long totalSellers, // Всего мастеров
+        long totalSales,  // Всего успешных продаж
         long totalProducts, // Всего товаров в базе
-        List<ChartPoint> platformGrowth,
-        long activeDisputes // Количество открытых споров
+        BigDecimal averageCheck, // Средний чек
+        List<ChartPoint> platformGrowth, // График оборота по дням
+        List<TopSellerStats> topSellers // Топ-5 мастеров
 ) {
 }
