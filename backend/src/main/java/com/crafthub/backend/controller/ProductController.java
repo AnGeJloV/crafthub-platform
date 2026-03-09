@@ -83,4 +83,17 @@ public class ProductController {
     ) {
         return ResponseEntity.ok(productService.updateProduct(id, request, images));
     }
+
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<ProductResponse>> getAllProductsForAdmin() {
+        return ResponseEntity.ok(productService.getAllProductsForAdmin());
+    }
+
+    @PostMapping("/{id}/suspend")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> suspendProduct(@PathVariable Long id, @RequestBody String reason) {
+        productService.suspendProduct(id, reason);
+        return ResponseEntity.ok().build();
+    }
 }

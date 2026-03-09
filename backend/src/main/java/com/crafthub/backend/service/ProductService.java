@@ -111,6 +111,7 @@ public class ProductService {
                 .orElseThrow(() -> new RuntimeException("Продавец не найден"));
 
         return productRepository.findAllBySellerId(seller.getId()).stream()
+                .filter(p -> p.getStatus() != ProductStatus.DELETED)
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -180,11 +181,18 @@ public class ProductService {
             );
         }
 
+        // Удаляем картинки с диска, чтобы не занимали место
         if (product.getImages() != null) {
             product.getImages().forEach(img -> fileStorageService.deleteFile(img.getImageUrl()));
+            product.getImages().clear();
         }
 
-        productRepository.delete(product);
+        // Ставим новый статус и убираем со склада
+        product.setStatus(ProductStatus.DELETED);
+        product.setStockQuantity(0);
+        product.setModerationComment("Удален безвозвратно");
+
+        productRepository.save(product);
     }
 
     // Обновить существующий товар
@@ -225,5 +233,30 @@ public class ProductService {
 
         Product saved = productRepository.save(product);
         return mapToResponse(saved);
+    }
+
+    // Получить все товары для админа
+    public List<ProductResponse> getAllProductsForAdmin() {
+        return productRepository.findAll().stream()
+                .filter(p -> p.getStatus() != ProductStatus.DELETED)
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    // Снять с публикации (отправить на доработку)
+    @Transactional
+    public void suspendProduct(Long productId, String reason) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Товар не найден"));
+
+        product.setStatus(ProductStatus.REJECTED);
+        product.setModerationComment(reason);
+        productRepository.save(product);
+
+        notificationService.createNotification(
+                product.getSeller(),
+                "Ваш товар '" + product.getName() + "' снят с публикации администратором. Причина: " + reason,
+                NotificationType.PRODUCT
+        );
     }
 }

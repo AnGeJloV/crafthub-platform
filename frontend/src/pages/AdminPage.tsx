@@ -1,32 +1,16 @@
 import React, {useEffect, useState, useCallback} from 'react';
 import apiClient from '../api';
 import {SecureImage} from '../components/SecureImage';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import {
-    UserCheck,
-    PackageSearch,
-    PlaySquare,
-    Users,
-    ShieldAlert,
-    ShieldCheck,
-    Mail,
-    Phone,
-    Flag,
-    Star,
-    Trash2,
-    Package,
-    ExternalLink,
-    TrendingUp,
-    DollarSign,
-    FileText,
-    X,
-    FolderOpen,
-    ShoppingBag,
-    Award
+    UserCheck, PackageSearch, PlaySquare, Users, ShieldAlert,
+    ShieldCheck, Mail, Phone, Flag, Star, Trash2, Package,
+    ExternalLink, TrendingUp, DollarSign, FileText, X, FolderOpen, Archive, Search
 } from 'lucide-react';
 import {Link} from 'react-router-dom';
 import {useAuthStore} from "../store/authStore.ts";
 import toast from 'react-hot-toast';
+import {LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer} from 'recharts';
+import {ShoppingBag, Award} from 'lucide-react';
 
 /**
  * Панель управления для администратора: модерация, верификация и жалобы на отзывы
@@ -59,8 +43,10 @@ interface ProductRequest {
     name: string;
     description: string;
     price: number;
+    status: string;
     categoryDisplayName: string;
     sellerName: string;
+    sellerId: number;
     youtubeVideoId?: string;
     images: ProductImage[];
 }
@@ -110,9 +96,10 @@ interface AdminStats {
 }
 
 export const AdminPage = () => {
-    const [activeTab, setActiveTab] = useState<'sellers' | 'products' | 'users' | 'reports' | 'stats'>('sellers');
+    const [activeTab, setActiveTab] = useState<'sellers' | 'products' | 'catalog' | 'users' | 'reports' | 'stats'>('sellers');
     const [sellerRequests, setSellerRequests] = useState<SellerRequest[]>([]);
     const [productRequests, setProductRequests] = useState<ProductRequest[]>([]);
+    const [allProducts, setAllProducts] = useState<ProductRequest[]>([]);
     const [users, setUsers] = useState<UserManagementItem[]>([]);
     const [reportedReviews, setReportedReviews] = useState<ReportedReview[]>([]);
     const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
@@ -122,38 +109,36 @@ export const AdminPage = () => {
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [scale, setScale] = useState(1);
 
+    const [catalogSearch, setCatalogSearch] = useState('');
+
     const [decisionModal, setDecisionModal] = useState<{
         isOpen: boolean;
-        type: 'product' | 'seller' | 'review' | 'user';
-        action: 'approve' | 'reject' | 'delete' | 'toggle';
+        type: 'product' | 'seller' | 'review' | 'user' | 'suspend' | 'deleteProduct';
+        action: 'approve' | 'reject' | 'delete' | 'toggle' | 'suspend' | 'deleteProduct';
         id: number | null;
         title: string;
         confirmText: string;
         showInput: boolean;
     }>({
-        isOpen: false,
-        type: 'product',
-        action: 'approve',
-        id: null,
-        title: '',
-        confirmText: '',
-        showInput: false
+        isOpen: false, type: 'product', action: 'approve', id: null, title: '', confirmText: '', showInput: false
     });
     const [reason, setReason] = useState('');
 
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const [sellers, products, allUsers, reports, stats] = await Promise.all([
+            const [sellers, products, allUsers, allProds, reports, stats] = await Promise.all([
                 apiClient.get('/verification/pending'),
                 apiClient.get('/products/pending'),
                 apiClient.get('/admin/users'),
+                apiClient.get('/products/all'),
                 apiClient.get('/reviews/admin/reported'),
                 apiClient.get('/stats/admin')
             ]);
             setSellerRequests(sellers.data);
             setProductRequests(products.data);
             setUsers(allUsers.data);
+            setAllProducts(allProds.data);
             setReportedReviews(reports.data);
             setAdminStats(stats.data);
         } catch (err) {
@@ -179,21 +164,21 @@ export const AdminPage = () => {
         try {
             if (type === 'seller') {
                 await apiClient.post(`/verification/${id}/${action}`, action === 'reject' ? {reason} : {});
-                setSellerRequests(prev => prev.filter(r => r.id !== id));
                 toast.success(action === 'approve' ? 'Мастер одобрен' : 'Заявка отклонена');
             } else if (type === 'product') {
-                await apiClient.post(`/products/${id}/${action}`, reason, {
-                    headers: {'Content-Type': 'text/plain'}
-                });
-                setProductRequests(prev => prev.filter(r => r.id !== id));
+                await apiClient.post(`/products/${id}/${action}`, reason, {headers: {'Content-Type': 'text/plain'}});
                 toast.success(action === 'approve' ? 'Товар опубликован' : 'Товар отклонен');
+            } else if (type === 'suspend') {
+                await apiClient.post(`/products/${id}/suspend`, reason, {headers: {'Content-Type': 'text/plain'}});
+                toast.success('Товар снят с публикации');
+            } else if (type === 'deleteProduct') {
+                await apiClient.delete(`/products/${id}`);
+                toast.success('Товар навсегда удален');
             } else if (type === 'review') {
                 await apiClient.delete(`/reviews/admin/${id}`);
-                setReportedReviews(prev => prev.filter(r => r.id !== id));
                 toast.success('Отзыв удален');
             } else if (type === 'user') {
                 await apiClient.patch(`/admin/users/${id}/status`);
-                setUsers(prev => prev.map(u => u.id === id ? {...u, enabled: !u.enabled} : u));
                 toast.success('Статус пользователя изменен');
             }
 
@@ -288,6 +273,11 @@ export const AdminPage = () => {
         }
     };
 
+    const filteredCatalog = allProducts.filter(p =>
+        p.name.toLowerCase().includes(catalogSearch.toLowerCase()) ||
+        p.sellerName.toLowerCase().includes(catalogSearch.toLowerCase())
+    );
+
     if (loading) return (
         <div className="text-center mt-20 text-slate-400 animate-pulse font-bold uppercase tracking-widest">
             Загрузка панели...
@@ -327,6 +317,10 @@ export const AdminPage = () => {
                 <button onClick={() => setActiveTab('users')}
                         className={`flex items-center px-6 py-3 rounded-xl font-bold transition-all ${activeTab === 'users' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>
                     <Users size={18} className="mr-2"/> Пользователи
+                </button>
+                <button onClick={() => setActiveTab('catalog')}
+                        className={`flex items-center px-6 py-3 rounded-2xl font-bold transition-all ${activeTab === 'catalog' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>
+                    <Archive size={18} className="mr-2"/> Каталог
                 </button>
                 <button onClick={() => setActiveTab('reports')}
                         className={`flex items-center px-6 py-3 rounded-xl font-bold transition-all ${activeTab === 'reports' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>
@@ -441,7 +435,7 @@ export const AdminPage = () => {
                 </div>
             )}
 
-            {/* Контент: Товары */}
+            {/* Контент: Модерация товаров */}
             {activeTab === 'products' && (
                 <div className="grid gap-6">
                     {productRequests.length === 0 ?
@@ -501,7 +495,7 @@ export const AdminPage = () => {
                                                 confirmText: 'Отклонить',
                                                 showInput: true
                                             })}
-                                            className="flex-1 bg-red-50 text-red-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-100 active:scale-95"
+                                            className="flex-1 bg-amber-50 text-amber-600 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all border border-red-100 active:scale-95"
                                         >
                                             ОТКЛОНИТЬ
                                         </button>
@@ -594,6 +588,103 @@ export const AdminPage = () => {
                 </div>
             )}
 
+            {/* Контент: Каталог */}
+            {activeTab === 'catalog' && (
+                <div className="animate-in fade-in duration-500">
+                    <div className="relative mb-8 max-w-2xl">
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={20}/>
+                        <input
+                            type="text"
+                            placeholder="Поиск по названию или имени автора..."
+                            value={catalogSearch}
+                            onChange={(e) => setCatalogSearch(e.target.value)}
+                            className="w-full bg-white pl-16 pr-6 py-4 rounded-[2rem] border border-slate-100 shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none font-medium transition-all"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredCatalog.map(prod => (
+                            <div key={prod.id}
+                                 className="bg-white rounded-[2rem] border border-slate-100 p-6 flex flex-col hover:shadow-md transition-shadow relative group">
+
+                                <Link to={`/product/${prod.id}`} className="flex items-start gap-4 mb-4 cursor-pointer">
+                                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-50 shrink-0">
+                                        <img
+                                            src={`http://localhost:8080/uploads/${prod.images.find(img => img.isMain)?.imageUrl || prod.images[0]?.imageUrl}`}
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                            alt=""/>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-black text-slate-800 line-clamp-1 leading-tight mb-1 group-hover:text-indigo-600 transition-colors"
+                                            title={prod.name}>{prod.name}</h3>
+                                        <span className="text-xs font-bold text-slate-400">
+                                            {prod.sellerName}
+                                        </span>
+                                        <div className="mt-2">
+                                            <span
+                                                className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${
+                                                    prod.status === 'ACTIVE' ? 'bg-green-50 text-green-600' :
+                                                        prod.status === 'PENDING' ? 'bg-amber-50 text-amber-600' :
+                                                            'bg-red-50 text-red-500'
+                                                }`}>
+                                                {prod.status}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </Link>
+
+                                <div
+                                    className="mt-auto pt-4 border-t border-slate-50 grid grid-cols-2 gap-2 relative z-10">
+                                    <button
+                                        disabled={prod.status === 'REJECTED'}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            openModal({
+                                                isOpen: true,
+                                                type: 'suspend',
+                                                action: 'suspend',
+                                                id: prod.id,
+                                                title: 'Снять с публикации?',
+                                                confirmText: 'Отклонить',
+                                                showInput: true
+                                            });
+                                        }}
+                                        className="py-2.5 bg-amber-50 text-amber-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all border border-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Отклонить
+                                    </button>
+
+                                    <button
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            openModal({
+                                                isOpen: true,
+                                                type: 'deleteProduct',
+                                                action: 'deleteProduct',
+                                                id: prod.id,
+                                                title: 'Удалить навсегда?',
+                                                confirmText: 'Удалить',
+                                                showInput: false
+                                            });
+                                        }}
+                                        className="py-2.5 bg-red-50 text-red-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-100"
+                                    >
+                                        Удалить
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+
+                        {filteredCatalog.length === 0 && (
+                            <div
+                                className="col-span-full py-20 text-center text-slate-400 font-bold uppercase tracking-widest border-2 border-dashed border-slate-200 rounded-[2.5rem]">
+                                Ничего не найдено
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Контент: Жалобы */}
             {activeTab === 'reports' && (
                 <div className="grid gap-6">
@@ -661,29 +752,34 @@ export const AdminPage = () => {
 
                     {/* KPI Карточки */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-                        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm text-center relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-50 rounded-bl-[2.5rem]" />
-                            <DollarSign className="mx-auto text-indigo-500 mb-4 relative z-10" size={32} />
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Оборот платформы</p>
+                        <div
+                            className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm text-center relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-50 rounded-bl-[2.5rem]"/>
+                            <DollarSign className="mx-auto text-indigo-500 mb-4 relative z-10" size={32}/>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Оборот
+                                платформы</p>
                             <p className="text-3xl font-black text-indigo-600 relative z-10">{adminStats.totalGmv.toFixed(2)} BYN</p>
                         </div>
 
-                        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm text-center relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-50 rounded-bl-[2.5rem]" />
-                            <ShoppingBag className="mx-auto text-emerald-500 mb-4 relative z-10" size={32} />
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Успешных сделок</p>
+                        <div
+                            className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm text-center relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-50 rounded-bl-[2.5rem]"/>
+                            <ShoppingBag className="mx-auto text-emerald-500 mb-4 relative z-10" size={32}/>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Успешных
+                                сделок</p>
                             <p className="text-3xl font-black text-emerald-600 relative z-10">{adminStats.totalSales}</p>
                         </div>
 
                         <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
-                            <Users className="mx-auto text-slate-400 mb-4" size={32} />
+                            <Users className="mx-auto text-slate-400 mb-4" size={32}/>
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Пользователи</p>
                             <p className="text-3xl font-black text-slate-800">{adminStats.totalUsers}</p>
                         </div>
 
                         <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
-                            <TrendingUp className="mx-auto text-slate-400 mb-4" size={32} />
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Средний чек</p>
+                            <TrendingUp className="mx-auto text-slate-400 mb-4" size={32}/>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Средний
+                                чек</p>
                             <p className="text-3xl font-black text-slate-800">{adminStats.averageCheck.toFixed(2)} BYN</p>
                         </div>
                     </div>
@@ -692,27 +788,35 @@ export const AdminPage = () => {
                         {/* График оборота */}
                         <div className="lg:col-span-3 bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100">
                             <h3 className="text-lg font-black text-slate-800 mb-8 uppercase tracking-widest flex items-center">
-                                <TrendingUp className="mr-2 text-indigo-500" size={20} /> Динамика выручки
+                                <TrendingUp className="mr-2 text-indigo-500" size={20}/> Динамика выручки
                             </h3>
                             <div className="h-80 w-full">
                                 {adminStats.platformGrowth.length === 0 ? (
-                                    <div className="h-full flex items-center justify-center text-slate-300 font-bold uppercase text-xs">
+                                    <div
+                                        className="h-full flex items-center justify-center text-slate-300 font-bold uppercase text-xs">
                                         Недостаточно данных для графика
                                     </div>
                                 ) : (
                                     <ResponsiveContainer width="100%" height="100%">
                                         <LineChart data={adminStats.platformGrowth}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9"/>
                                             <XAxis
                                                 dataKey="label"
                                                 axisLine={false}
                                                 tickLine={false}
                                                 tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 'bold'}}
-                                                tickFormatter={(str) => new Date(str).toLocaleDateString('ru-RU', {day: 'numeric', month: 'short'})}
+                                                tickFormatter={(str) => new Date(str).toLocaleDateString('ru-RU', {
+                                                    day: 'numeric',
+                                                    month: 'short'
+                                                })}
                                             />
-                                            <YAxis hide domain={['auto', 'auto']} />
+                                            <YAxis hide domain={['auto', 'auto']}/>
                                             <Tooltip
-                                                contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
+                                                contentStyle={{
+                                                    borderRadius: '16px',
+                                                    border: 'none',
+                                                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
+                                                }}
                                                 labelStyle={{fontWeight: 'bold', color: '#1e293b'}}
                                                 formatter={(value: unknown) => [`${Number(value).toFixed(2)} BYN`, 'Выручка']}
                                             />
@@ -721,8 +825,8 @@ export const AdminPage = () => {
                                                 dataKey="value"
                                                 stroke="#6366f1"
                                                 strokeWidth={4}
-                                                dot={{ r: 4, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }}
-                                                activeDot={{ r: 8, strokeWidth: 0 }}
+                                                dot={{r: 4, fill: '#6366f1', strokeWidth: 2, stroke: '#fff'}}
+                                                activeDot={{r: 8, strokeWidth: 0}}
                                             />
                                         </LineChart>
                                     </ResponsiveContainer>
@@ -733,31 +837,37 @@ export const AdminPage = () => {
                         {/* Топ продавцов */}
                         <div className="lg:col-span-2 bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100">
                             <h3 className="text-lg font-black text-slate-800 mb-8 uppercase tracking-widest flex items-center">
-                                <Award className="mr-2 text-yellow-500" size={20} /> Топ мастеров
+                                <Award className="mr-2 text-yellow-500" size={20}/> Топ мастеров
                             </h3>
                             <div className="space-y-6">
                                 {adminStats.topSellers.length === 0 ? (
-                                    <p className="text-center text-slate-300 py-10 italic font-medium">Пока нет завершенных сделок</p>
+                                    <p className="text-center text-slate-300 py-10 italic font-medium">Пока нет
+                                        завершенных сделок</p>
                                 ) : adminStats.topSellers.map((seller, idx) => (
                                     <div key={idx} className="flex items-center justify-between group">
                                         <div className="flex items-center">
-                                            <span className={`w-8 h-8 rounded-xl flex items-center justify-center mr-4 font-black text-xs ${
-                                                idx === 0 ? 'bg-yellow-100 text-yellow-600' :
-                                                    idx === 1 ? 'bg-slate-100 text-slate-500' :
-                                                        idx === 2 ? 'bg-amber-100 text-amber-700' :
-                                                            'bg-slate-50 text-slate-400'
-                                            }`}>
+                                            <span
+                                                className={`w-8 h-8 rounded-xl flex items-center justify-center mr-4 font-black text-xs ${
+                                                    idx === 0 ? 'bg-yellow-100 text-yellow-600' :
+                                                        idx === 1 ? 'bg-slate-100 text-slate-500' :
+                                                            idx === 2 ? 'bg-amber-100 text-amber-700' :
+                                                                'bg-slate-50 text-slate-400'
+                                                }`}>
                                                 {idx + 1}
                                             </span>
                                             <div>
-                                                <span className="text-sm font-bold text-slate-800 block leading-none mb-1">{seller.sellerName}</span>
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center">
-                                                    <Star size={10} className="mr-1 text-yellow-400 fill-yellow-400" /> {seller.averageRating.toFixed(1)}
+                                                <span
+                                                    className="text-sm font-bold text-slate-800 block leading-none mb-1">{seller.sellerName}</span>
+                                                <span
+                                                    className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center">
+                                                    <Star size={10}
+                                                          className="mr-1 text-yellow-400 fill-yellow-400"/> {seller.averageRating.toFixed(1)}
                                                 </span>
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <span className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-[10px] font-black uppercase mb-1 inline-block">
+                                            <span
+                                                className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-[10px] font-black uppercase mb-1 inline-block">
                                                 {seller.totalSales} продаж
                                             </span>
                                             <p className="text-xs font-black text-slate-900">{seller.totalRevenue.toFixed(2)} BYN</p>
@@ -818,9 +928,15 @@ export const AdminPage = () => {
                             <button
                                 onClick={handleConfirmDecision}
                                 className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 ${
-                                    decisionModal.action === 'reject' || decisionModal.action === 'delete' || (decisionModal.action === 'toggle' && decisionModal.confirmText === 'Заблокировать')
-                                        ? 'bg-red-500 text-white hover:bg-red-600'
-                                        : 'bg-green-600 text-white hover:bg-green-700'
+                                    decisionModal.action === 'delete' ||
+                                    decisionModal.action === 'deleteProduct' ||
+                                    (decisionModal.type === 'seller' && decisionModal.action === 'reject') ||
+                                    (decisionModal.action === 'toggle' && decisionModal.confirmText === 'Заблокировать')
+                                        ? 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white border border-red-100'
+                                        : decisionModal.action === 'suspend' ||
+                                        (decisionModal.type === 'product' && decisionModal.action === 'reject')
+                                            ? 'bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white border border-amber-100'
+                                            : 'bg-green-600 text-white hover:bg-green-700'
                                 }`}
                             >
                                 {decisionModal.confirmText}
